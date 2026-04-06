@@ -1,0 +1,108 @@
+/** index 0-based → letter. 0→A, 25→Z */
+export function indexToChar(i: number): string {
+  return String.fromCharCode(65 + i)
+}
+
+/** letter → index. A→0, Z→25 */
+export function charToIndex(c: string): number {
+  return c.toUpperCase().charCodeAt(0) - 65
+}
+
+/** 0-based column index → Excel-style letters: 0→A, 25→Z, 26→AA, …, 51→AZ */
+export function colIndexToExcelLetters(zeroBased: number): string {
+  if (zeroBased < 0) return ""
+  let n = zeroBased + 1
+  let s = ""
+  while (n > 0) {
+    n--
+    s = String.fromCharCode(65 + (n % 26)) + s
+    n = Math.floor(n / 26)
+  }
+  return s
+}
+
+const MAX_COL_SPAN = 52
+
+/**
+ * Column letters left → right as displayed.
+ * reverseCol false → A B C … Z AA AB …
+ * reverseCol true → … (reversed)
+ */
+export function getColHeaders(
+  colStartChar: string,
+  cols: number,
+  reverseCol: boolean
+): string[] {
+  const start = charToIndex(colStartChar)
+  const headers = Array.from({ length: cols }, (_, i) =>
+    colIndexToExcelLetters(start + i)
+  )
+  return reverseCol ? [...headers].reverse() : headers
+}
+
+export function generateSeatLabel(
+  row: number,
+  colIndex: number,
+  headers: string[]
+): string {
+  return `${headers[colIndex]}_${String(row + 1).padStart(2, "0")}`
+}
+
+export function generateSeatsForLayout(
+  layoutId: string,
+  rows: number,
+  cols: number,
+  colStartChar: string,
+  reverseCol: boolean
+) {
+  const headers = getColHeaders(colStartChar, cols, reverseCol)
+  const seats: Array<{
+    layout_id: string
+    row: number
+    col: number
+    label: string
+    category_id: null
+    is_empty: boolean
+    is_checked: boolean
+    checked_at: null
+  }> = []
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      seats.push({
+        layout_id: layoutId,
+        row: r,
+        col: c,
+        label: generateSeatLabel(r, c, headers),
+        category_id: null,
+        is_empty: false,
+        is_checked: false,
+        checked_at: null,
+      })
+    }
+  }
+  return seats
+}
+
+export function validateColRange(colStartChar: string, cols: number) {
+  const startIdx = charToIndex(colStartChar)
+  if (startIdx < 0 || startIdx > 25) {
+    return {
+      valid: false as const,
+      errorMsg: `Huruf awal kolom tidak valid.`,
+    }
+  }
+  if (cols < 1 || cols > MAX_COL_SPAN) {
+    return {
+      valid: false as const,
+      errorMsg: `Jumlah kolom harus 1–${MAX_COL_SPAN}.`,
+    }
+  }
+  if (startIdx + cols > MAX_COL_SPAN) {
+    const endLetters = colIndexToExcelLetters(startIdx + cols - 1)
+    return {
+      valid: false as const,
+      errorMsg: `Melebihi AZ. Mulai "${colStartChar}" + ${cols} kolom = sampai "${endLetters}".`,
+    }
+  }
+  return { valid: true as const, errorMsg: "" }
+}

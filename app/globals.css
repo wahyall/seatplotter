@@ -1,26 +1,105 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* SeatPlotter — dark-first, violet accent */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.75rem;
+  --background: hsl(240 8% 7%);
+  --foreground: hsl(0 0% 96%);
+  --card: hsl(240 6% 10%);
+  --card-foreground: hsl(0 0% 96%);
+  --popover: hsl(240 6% 11%);
+  --popover-foreground: hsl(0 0% 96%);
+  --primary: hsl(263 72% 58%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(240 5% 16%);
+  --secondary-foreground: hsl(0 0% 96%);
+  --muted: hsl(240 5% 18%);
+  --muted-foreground: hsl(240 5% 58%);
+  --accent: hsl(263 40% 22%);
+  --accent-foreground: hsl(270 100% 96%);
+  --destructive: hsl(0 72% 51%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(240 5% 18%);
+  --input: hsl(240 5% 18%);
+  --ring: hsl(263 72% 58%);
+  --chart-1: hsl(263 72% 58%);
+  --chart-2: hsl(200 80% 50%);
+  --chart-3: hsl(150 60% 45%);
+  --chart-4: hsl(40 90% 55%);
+  --chart-5: hsl(340 75% 55%);
+  --sidebar: hsl(240 7% 8%);
+  --sidebar-foreground: hsl(0 0% 92%);
+  --sidebar-border: hsl(240 5% 16%);
 }
 
 @theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --font-sans: var(--font-sans-app), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-app), ui-monospace, monospace;
+  --font-display: var(--font-display-app), var(--font-sans-app), sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans-app), ui-sans-serif, system-ui, sans-serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Realtime pulse on seats */
+@keyframes seat-pulse {
+  0% {
+    box-shadow: 0 0 0 0 hsl(263 72% 58% / 0.65);
+  }
+  70% {
+    box-shadow: 0 0 0 10px hsl(263 72% 58% / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(263 72% 58% / 0);
+  }
+}
+
+.animate-seat-pulse {
+  animation: seat-pulse 0.7s ease-out;
+}
+
+/* Export region for html2canvas */
+#export-layout {
+  background: hsl(240 8% 7%);
 }
