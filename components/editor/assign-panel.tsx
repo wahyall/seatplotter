@@ -297,7 +297,7 @@ export function AssignPanel({
             </div>
           )}
 
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
@@ -320,7 +320,7 @@ export function AssignPanel({
               <Redo2Icon className="size-4" />
               Redo
             </Button>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 
