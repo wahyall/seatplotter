@@ -75,6 +75,7 @@ export default function CheckGenderPage() {
     if (action !== "click") return
     const seat = useSeatStore.getState().seats[gender][seatId]
     if (!seat || seat.is_empty) return
+    if (filter !== "all" && seat.category_id !== filter) return
     const next = !seat.is_checked
     useSeatStore.getState().updateSeatLocal(seatId, gender, {
       is_checked: next,
