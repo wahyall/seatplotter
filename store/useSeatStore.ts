@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import type { Gender, SeatRow } from "@/types/db"
 import { bulkAssignCategory, checkSeat, updateSeat } from "@/lib/seats"
+import { useLayoutStore } from "@/store/useLayoutStore"
 
 export type SeatPatch = Partial<
   Pick<SeatRow, "category_id" | "is_empty" | "label">
@@ -81,12 +82,18 @@ export const useSeatStore = create<{
     }),
 
   applyRealtimeUpdate: (record) => {
-    const gender = get().layoutIdMap[record.layout_id]
-    if (!gender) return
+    let gender = get().layoutIdMap[record.layout_id]
+    if (!gender) {
+      const L = useLayoutStore.getState().layouts
+      if (L.male?.id === record.layout_id) gender = "male"
+      else if (L.female?.id === record.layout_id) gender = "female"
+      else return
+    }
     set((s) => {
       const prev = s.seats[gender][record.id]
       const merged = { ...(prev ?? record), ...record } as SeatRow
       return {
+        layoutIdMap: { ...s.layoutIdMap, [record.layout_id]: gender },
         seats: {
           ...s.seats,
           [gender]: { ...s.seats[gender], [record.id]: merged },
