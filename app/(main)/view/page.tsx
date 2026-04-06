@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 
 export default function ViewPage() {
   const config = useLayoutStore((s) => s.config)
+  const isExporting = useLayoutStore((s) => s.isExporting)
   const maleL = useLayoutStore((s) => s.layouts.male)
   const femaleL = useLayoutStore((s) => s.layouts.female)
   const maleCats = useLayoutStore((s) => s.categories.male)
@@ -60,6 +61,13 @@ export default function ViewPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 pb-8">
+      {isExporting && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+          <p className="mt-4 font-medium text-foreground">Menyiapkan gambar...</p>
+        </div>
+      )}
+
       <ConnectionBanner isConnected={isConnected} />
 
       <div className="flex items-start justify-between gap-4">
@@ -75,9 +83,17 @@ export default function ViewPage() {
           variant="secondary"
           className="shrink-0 rounded-full shadow-lg"
           onClick={() => {
-            void exportLayoutPNG(config?.event_name ?? "event").catch(() =>
-              toast.error("Export gagal")
-            )
+            useLayoutStore.getState().setIsExporting(true);
+            setTimeout(() => {
+              exportLayoutPNG(config?.event_name ?? "event")
+                .catch((err) => {
+                  console.error(err);
+                  toast.error("Export gagal")
+                })
+                .finally(() => {
+                  useLayoutStore.getState().setIsExporting(false);
+                });
+            }, 100);
           }}
         >
           <CameraIcon className="size-5" />
@@ -121,7 +137,13 @@ export default function ViewPage() {
         counts={counts}
       />
 
-      <div id="export-layout" className="flex min-h-0 flex-1 flex-col">
+      <div
+        id="export-layout"
+        className={cn(
+          "flex min-h-0 flex-1 flex-col",
+          isExporting && "h-max min-h-max w-max min-w-max bg-[#0c0c0f] p-8 -m-8"
+        )}
+      >
         <DualLayoutView
           stageLabel={config?.stage_label ?? "STAGE"}
           maleSeats={maleSeats as SeatWithDim[]}
@@ -141,6 +163,27 @@ export default function ViewPage() {
             })
           }}
         />
+        
+        {isExporting && activeCategories.length > 0 && (
+          <div className="mt-8 flex flex-col items-center gap-4 border-t border-white/10 pt-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Keterangan Kategori — {viewGender === "male" ? "Pria" : "Wanita"}
+            </h3>
+            <div className="flex flex-wrap justify-center gap-6">
+              {activeCategories.map((c) => (
+                <div key={c.id} className="flex items-center gap-2">
+                  <div
+                    className="size-4 rounded-sm border border-white/20 shadow-sm"
+                    style={{ backgroundColor: c.color }}
+                  />
+                  <span className="text-sm font-medium text-white/90">
+                    {c.name} ({counts?.[c.id] ?? 0})
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <SeatInfoModal

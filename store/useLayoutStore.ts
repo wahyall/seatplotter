@@ -6,6 +6,7 @@ export const useLayoutStore = create<{
   layouts: Record<Gender, LayoutRow | null>
   categories: Record<Gender, CategoryRow[]>
   hydrated: boolean
+  isExporting: boolean
 
   setConfig: (c: ConfigRow | null) => void
   setLayouts: (male: LayoutRow | null, female: LayoutRow | null) => void
@@ -14,11 +15,13 @@ export const useLayoutStore = create<{
   updateCategory: (gender: Gender, id: string, cat: CategoryRow) => void
   removeCategory: (gender: Gender, id: string) => void
   setHydrated: (v: boolean) => void
+  setIsExporting: (v: boolean) => void
 }>((set) => ({
   config: null,
   layouts: { male: null, female: null },
   categories: { male: [], female: [] },
   hydrated: false,
+  isExporting: false,
 
   setConfig: (c) => set({ config: c }),
 
@@ -57,4 +60,5 @@ export const useLayoutStore = create<{
     })),
 
   setHydrated: (v) => set({ hydrated: v }),
+  setIsExporting: (v) => set({ isExporting: v }),
 }))

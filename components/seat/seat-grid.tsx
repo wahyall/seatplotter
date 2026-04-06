@@ -8,6 +8,7 @@ import { SeatColHeader } from "@/components/seat/seat-col-header"
 import { SeatRowLabel } from "@/components/seat/seat-row-label"
 import { SeatCell, type SeatMode } from "@/components/seat/seat-cell"
 import { cn } from "@/lib/utils"
+import { useLayoutStore } from "@/store/useLayoutStore"
 
 /** Virtualized grid; single-seat actions via `onSeatAction`. Bulk drag-assign is not used here (editor handles tap / long-press only). */
 export function SeatGrid({
@@ -71,6 +72,8 @@ export function SeatGrid({
     [categories]
   )
 
+  const isExporting = useLayoutStore((s) => s.isExporting)
+
   return (
     <div
       className={cn(
@@ -81,51 +84,89 @@ export function SeatGrid({
     >
       <div
         ref={parentRef}
-        className="h-[min(58vh,520px)] overflow-auto rounded-xl border border-border/60 bg-card/30 p-2"
+        className={cn(
+          "h-[min(58vh,520px)] overflow-auto rounded-xl border border-border/60 bg-card/30 p-2",
+          isExporting && "h-auto overflow-visible"
+        )}
       >
         <div className="min-w-max">
           <div className="sticky top-0 z-10 -mx-2 mb-1 border-b border-border/40 bg-card/95 px-2 py-1 backdrop-blur-sm supports-backdrop-filter:bg-card/80">
             <SeatColHeader headers={headers} compact={compact} />
           </div>
           <div
-            className="relative"
-            style={{ height: rowVirtualizer.getTotalSize() }}
+            className={cn("relative", isExporting && "static space-y-[3px]")}
+            style={!isExporting ? { height: rowVirtualizer.getTotalSize() } : undefined}
           >
-            {rowVirtualizer.getVirtualItems().map((vRow) => (
-              <div
-                key={vRow.index}
-                className="absolute left-0 flex w-max min-w-full items-center gap-[3px] px-1"
-                style={{ top: vRow.start, height: vRow.size }}
-              >
-                <SeatRowLabel row={vRow.index} compact={compact} />
-                {Array.from({ length: layout.cols }, (_, c) => {
-                  const seat = seatsByRow[vRow.index]?.[c]
-                  if (!seat) {
-                    return (
-                      <div
-                        key={c}
-                        className="shrink-0 rounded-md bg-muted/30"
-                        style={{
-                          width: "var(--seat-size, 34px)",
-                          height: "var(--seat-size, 34px)",
-                        }}
-                      />
-                    )
-                  }
-                  return (
-                    <SeatCell
-                      key={seat.id}
-                      seat={seat}
-                      category={cat(seat.category_id)}
-                      mode={mode}
-                      onAction={onSeatAction}
-                      compact={compact}
-                    />
-                  )
-                })}
-                <SeatRowLabel row={vRow.index} compact={compact} />
-              </div>
-            ))}
+            {isExporting
+              ? Array.from({ length: layout.rows }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex w-max min-w-full items-center gap-[3px] px-1"
+                  >
+                    <SeatRowLabel row={i} compact={compact} />
+                    {Array.from({ length: layout.cols }, (_, c) => {
+                      const seat = seatsByRow[i]?.[c]
+                      if (!seat) {
+                        return (
+                          <div
+                            key={c}
+                            className="shrink-0 rounded-md bg-muted/30"
+                            style={{
+                              width: "var(--seat-size, 34px)",
+                              height: "var(--seat-size, 34px)",
+                            }}
+                          />
+                        )
+                      }
+                      return (
+                        <SeatCell
+                          key={seat.id}
+                          seat={seat}
+                          category={cat(seat.category_id)}
+                          mode={mode}
+                          onAction={onSeatAction}
+                          compact={compact}
+                        />
+                      )
+                    })}
+                    <SeatRowLabel row={i} compact={compact} />
+                  </div>
+                ))
+              : rowVirtualizer.getVirtualItems().map((vRow) => (
+                  <div
+                    key={vRow.index}
+                    className="absolute left-0 flex w-max min-w-full items-center gap-[3px] px-1"
+                    style={{ top: vRow.start, height: vRow.size }}
+                  >
+                    <SeatRowLabel row={vRow.index} compact={compact} />
+                    {Array.from({ length: layout.cols }, (_, c) => {
+                      const seat = seatsByRow[vRow.index]?.[c]
+                      if (!seat) {
+                        return (
+                          <div
+                            key={c}
+                            className="shrink-0 rounded-md bg-muted/30"
+                            style={{
+                              width: "var(--seat-size, 34px)",
+                              height: "var(--seat-size, 34px)",
+                            }}
+                          />
+                        )
+                      }
+                      return (
+                        <SeatCell
+                          key={seat.id}
+                          seat={seat}
+                          category={cat(seat.category_id)}
+                          mode={mode}
+                          onAction={onSeatAction}
+                          compact={compact}
+                        />
+                      )
+                    })}
+                    <SeatRowLabel row={vRow.index} compact={compact} />
+                  </div>
+                ))}
           </div>
         </div>
       </div>

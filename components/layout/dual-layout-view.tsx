@@ -6,6 +6,7 @@ import { SeatGrid } from "@/components/seat/seat-grid"
 import { StageBar } from "@/components/layout/stage-bar"
 import { useZoomPan } from "@/lib/hooks/useZoomPan"
 import { cn } from "@/lib/utils"
+import { useLayoutStore } from "@/store/useLayoutStore"
 
 export function DualLayoutView({
   stageLabel,
@@ -36,6 +37,7 @@ export function DualLayoutView({
 }) {
   const zoomRef = React.useRef<HTMLDivElement>(null)
   const { onTouchStart, onTouchMove, reset } = useZoomPan()
+  const isExporting = useLayoutStore((s) => s.isExporting)
 
   const filterSeats = React.useCallback(
     (list: SeatWithDim[], cats: CategoryRow[]) => {
@@ -61,7 +63,8 @@ export function DualLayoutView({
         ref={zoomRef}
         className={cn(
           "flex min-h-0 flex-1 touch-none gap-3 overflow-x-auto pb-2",
-          singleColumn && "justify-center"
+          singleColumn && "justify-center",
+          isExporting && "h-max min-h-max w-max min-w-max overflow-visible"
         )}
         onTouchStart={onTouchStart}
         // onTouchMove={(e) => onTouchMove(e, zoomRef.current)}
