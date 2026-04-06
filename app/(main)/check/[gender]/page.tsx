@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import type { Gender } from "@/types/db"
 import { useLayoutStore } from "@/store/useLayoutStore"
 import { useShallow } from "zustand/react/shallow"
@@ -14,6 +14,10 @@ import { StageBar } from "@/components/layout/stage-bar"
 import { SeatGrid } from "@/components/seat/seat-grid"
 import { FilterChips } from "@/components/seat/filter-chips"
 import { Progress } from "@/components/ui/progress"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { XIcon, QrCodeIcon, CheckCircle2Icon } from "lucide-react"
 export default function CheckGenderPage() {
   const params = useParams()
   const g = params.gender as string
@@ -32,8 +36,11 @@ export default function CheckGenderPage() {
   )
 
   const { isConnected } = useRealtimeSeats(layout?.id)
+  const scanQrUrl = config?.scan_qr_url ?? ""
 
   const [filter, setFilter] = React.useState("all")
+  const [withScanQr, setWithScanQr] = React.useState(false)
+  const [qrModalSeatId, setQrModalSeatId] = React.useState<string | null>(null)
 
   const stats = React.useMemo(() => {
     const active = seats.filter((s) => !s.is_empty)
@@ -63,19 +70,23 @@ export default function CheckGenderPage() {
     return m
   }, [seats])
 
-  const handleSeat = async (
+  const handleSeatRef = React.useRef<(seatId: string, action: string) => void>(() => {})
+
+  handleSeatRef.current = async (
     seatId: string,
-    action:
-      | "click"
-      | "touchstart"
-      | "touchend"
-      | "longpress"
-      | "touchpan"
+    action: string,
   ) => {
     if (action !== "click") return
     const seat = useSeatStore.getState().seats[gender][seatId]
     if (!seat || seat.is_empty) return
     if (filter !== "all" && seat.category_id !== filter) return
+
+    // If scan QR mode is enabled and seat is not yet checked, open modal
+    if (withScanQr && scanQrUrl && !seat.is_checked) {
+      setQrModalSeatId(seatId)
+      return
+    }
+
     const next = !seat.is_checked
     useSeatStore.getState().updateSeatLocal(seatId, gender, {
       is_checked: next,
@@ -87,6 +98,33 @@ export default function CheckGenderPage() {
       toast.error("Gagal update kursi")
       useSeatStore.getState().updateSeatLocal(seatId, gender, {
         is_checked: !next,
+        checked_at: null,
+      })
+    }
+  }
+
+  const handleSeat = React.useCallback(
+    (seatId: string, action: "click" | "touchstart" | "touchend" | "longpress" | "touchpan") => {
+      handleSeatRef.current(seatId, action)
+    },
+    []
+  )
+
+  const confirmScanAndCheck = async () => {
+    if (!qrModalSeatId || !gender) return
+    const seatId = qrModalSeatId
+    setQrModalSeatId(null)
+    useSeatStore.getState().updateSeatLocal(seatId, gender, {
+      is_checked: true,
+      checked_at: new Date().toISOString(),
+    })
+    try {
+      await persistCheck(gender, seatId, true)
+      toast.success("Kursi berhasil dicentang")
+    } catch {
+      toast.error("Gagal update kursi")
+      useSeatStore.getState().updateSeatLocal(seatId, gender, {
+        is_checked: false,
         checked_at: null,
       })
     }
@@ -134,6 +172,23 @@ export default function CheckGenderPage() {
         counts={counts}
       />
 
+      {scanQrUrl && (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="with-scan-qr"
+            checked={withScanQr}
+            onCheckedChange={(v) => setWithScanQr(v === true)}
+          />
+          <Label
+            htmlFor="with-scan-qr"
+            className="inline-flex cursor-pointer items-center gap-1.5 text-sm"
+          >
+            <QrCodeIcon className="size-3.5" />
+            Dengan Scan QR
+          </Label>
+        </div>
+      )}
+
       <StageBar label={config?.stage_label ?? "STAGE"} />
 
       <SeatGrid
@@ -143,6 +198,55 @@ export default function CheckGenderPage() {
         mode="check"
         onSeatAction={handleSeat}
       />
+
+      {/* Fullscreen QR Scan Modal */}
+      <AnimatePresence>
+        {qrModalSeatId && scanQrUrl && (
+          <motion.div
+            key="qr-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex flex-col bg-background"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <QrCodeIcon className="size-4 text-primary" />
+                Scan QR — {useSeatStore.getState().seats[gender][qrModalSeatId]?.label ?? qrModalSeatId}
+              </div>
+              <button
+                onClick={() => setQrModalSeatId(null)}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <XIcon className="size-5" />
+              </button>
+            </div>
+
+            {/* Iframe */}
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={scanQrUrl}
+                className="h-full w-full border-0"
+                allow="camera;microphone"
+              />
+            </div>
+
+            {/* Footer action */}
+            <div className="border-t border-border/60 p-4">
+              <Button
+                onClick={confirmScanAndCheck}
+                size="lg"
+                className="w-full gap-2 rounded-xl"
+              >
+                <CheckCircle2Icon className="size-4" />
+                Tutup & Centang Kursi
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

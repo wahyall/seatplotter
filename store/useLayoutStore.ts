@@ -16,6 +16,7 @@ export const useLayoutStore = create<{
   removeCategory: (gender: Gender, id: string) => void
   setHydrated: (v: boolean) => void
   setIsExporting: (v: boolean) => void
+  patchConfig: (patch: Partial<ConfigRow>) => void
 }>((set) => ({
   config: null,
   layouts: { male: null, female: null },
@@ -61,4 +62,8 @@ export const useLayoutStore = create<{
 
   setHydrated: (v) => set({ hydrated: v }),
   setIsExporting: (v) => set({ isExporting: v }),
+  patchConfig: (patch) =>
+    set((s) => ({
+      config: s.config ? { ...s.config, ...patch } : null,
+    })),
 }))

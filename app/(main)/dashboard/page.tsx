@@ -3,11 +3,15 @@
 import * as React from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
+import { supabase } from "@/lib/supabase"
 import { useLayoutStore } from "@/store/useLayoutStore"
 import { useSeatStore } from "@/store/useSeatStore"
 import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats"
 import { ConnectionBanner } from "@/components/layout/connection-banner"
 import { buttonVariants } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
@@ -24,6 +28,7 @@ import {
   RadioIcon,
   SettingsIcon,
   CheckCircle2Icon,
+  QrCodeIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -50,6 +55,9 @@ export default function DashboardPage() {
   const femaleL = useLayoutStore((s) => s.layouts.female)
   const maleSeats = useSeatStore((s) => s.seats.male)
   const femaleSeats = useSeatStore((s) => s.seats.female)
+  const patchConfig = useLayoutStore((s) => s.patchConfig)
+
+  const scanQrUrl = config?.scan_qr_url ?? ""
 
   const ids = [maleL?.id, femaleL?.id].filter(Boolean) as string[]
   const { isConnected } = useRealtimeSeats(ids)
@@ -62,6 +70,32 @@ export default function DashboardPage() {
     () => statsForGender("female", femaleSeats),
     [femaleSeats]
   )
+
+  // Debounced persist to Supabase
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleScanQrUrlChange = React.useCallback(
+    (value: string) => {
+      patchConfig({ scan_qr_url: value })
+
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(async () => {
+        if (!config?.id) return
+        const { error } = await supabase
+          .from("config")
+          .update({ scan_qr_url: value, updated_at: new Date().toISOString() })
+          .eq("id", config.id)
+        if (error) toast.error("Gagal menyimpan Scan QR Url")
+      }, 600)
+    },
+    [config?.id, patchConfig]
+  )
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
 
   if (!hydrated) {
     return (
@@ -119,6 +153,29 @@ export default function DashboardPage() {
         />
         {isConnected ? "Live — sinkron realtime" : "Menyambungkan…"}
       </div>
+
+      <Card className="overflow-hidden border-border/60">
+        <CardContent className="p-4">
+          <Label
+            htmlFor="scan-qr-url"
+            className="mb-2 inline-flex items-center gap-2 text-sm font-medium"
+          >
+            <QrCodeIcon className="size-4 text-primary" />
+            Scan QR Url
+          </Label>
+          <Input
+            id="scan-qr-url"
+            type="url"
+            placeholder="https://example.com/scan"
+            value={scanQrUrl}
+            onChange={(e) => handleScanQrUrlChange(e.target.value)}
+            className="rounded-lg"
+          />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            URL yang digunakan untuk iframe scan QR di halaman centang.
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
         <motion.div

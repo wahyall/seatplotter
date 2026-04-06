@@ -1,0 +1,1 @@
+ALTER TABLE config ADD COLUMN IF NOT EXISTS scan_qr_url text DEFAULT '';

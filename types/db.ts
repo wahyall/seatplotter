@@ -6,6 +6,7 @@ export interface ConfigRow {
   event_date: string | null
   event_venue: string | null
   stage_label: string
+  scan_qr_url: string
   updated_at: string
 }
 
