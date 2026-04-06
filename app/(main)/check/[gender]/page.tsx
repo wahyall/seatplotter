@@ -254,7 +254,7 @@ export default function CheckGenderPage() {
             {/* Footer action */}
             <div className="border-t border-border/60 p-4 space-y-3">
               <p className="text-center text-xs text-muted-foreground">
-                Klik tombol ini jika sudah melakukan scan QR.
+                Klik tombol di bawah ini jika sudah melakukan scan QR.
               </p>
               <Button
                 onClick={confirmScanAndCheck}
