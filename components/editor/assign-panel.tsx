@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { toast } from "sonner"
-import { bulkAssignCategory } from "@/lib/seats"
 import type { Gender, LayoutRow } from "@/types/db"
 import { useLayoutStore } from "@/store/useLayoutStore"
 import {
@@ -51,11 +50,10 @@ export function AssignPanel({
 
   const longPressRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const draggedSeats = React.useRef(new Set<string>())
-  const dragBefore = React.useRef<
-    Record<string, { category_id: string | null; is_empty: boolean }>
-  >({})
   const suppressClick = React.useRef(false)
   const longPressTriggered = React.useRef(false)
+  /** After touchpan (scroll), ignore the following touchend + synthetic click on that seat */
+  const skipTouchEndAfterPanRef = React.useRef(false)
   const didInitCategory = React.useRef(false)
 
   React.useEffect(() => {
@@ -77,29 +75,25 @@ export function AssignPanel({
   const canUndo = useSeatStore((s) => s.canUndo)
   const canRedo = useSeatStore((s) => s.canRedo)
 
-  const paintSeat = (seatId: string) => {
-    const catId = activeCategoryIdRef.current
-    if (!catId) return
-    const st = useSeatStore.getState()
-    const seat = st.seats[gender][seatId]
-    if (!seat) return
-    if (!(seatId in dragBefore.current)) {
-      dragBefore.current[seatId] = {
-        category_id: seat.category_id,
-        is_empty: seat.is_empty,
-      }
-    }
-    st.updateSeatLocal(seatId, gender, {
-      category_id: catId,
-      is_empty: false,
-    })
-    draggedSeats.current.add(seatId)
-  }
-
   const handleSeatAction = async (
     seatId: string,
-    action: "click" | "touchstart" | "touchend" | "longpress"
+    action:
+      | "click"
+      | "touchstart"
+      | "touchend"
+      | "longpress"
+      | "touchpan"
   ) => {
+    if (action === "touchpan") {
+      skipTouchEndAfterPanRef.current = true
+      if (longPressRef.current) {
+        clearTimeout(longPressRef.current)
+        longPressRef.current = null
+      }
+      longPressTriggered.current = false
+      return
+    }
+
     const seat = useSeatStore.getState().seats[gender][seatId]
     if (!seat) return
 
@@ -108,7 +102,6 @@ export function AssignPanel({
 
     if (action === "touchstart") {
       draggedSeats.current = new Set([seatId])
-      dragBefore.current = {}
       longPressRef.current = setTimeout(() => {
         longPressTriggered.current = true
         setEditingId(seatId)
@@ -126,7 +119,16 @@ export function AssignPanel({
       if (longPressTriggered.current) {
         longPressTriggered.current = false
         draggedSeats.current.clear()
-        dragBefore.current = {}
+        return
+      }
+
+      if (skipTouchEndAfterPanRef.current) {
+        skipTouchEndAfterPanRef.current = false
+        draggedSeats.current.clear()
+        suppressClick.current = true
+        window.setTimeout(() => {
+          suppressClick.current = false
+        }, 450)
         return
       }
 
@@ -147,7 +149,6 @@ export function AssignPanel({
             toast.error(e instanceof Error ? e.message : "Gagal")
           }
         }
-        dragBefore.current = {}
         return
       }
 
@@ -156,47 +157,21 @@ export function AssignPanel({
         currentCat &&
         ids.length > 0
       ) {
+        const id = ids[0]
+        const s = useSeatStore.getState().seats[gender][id]
+        if (!s) return
         suppressClick.current = true
         window.setTimeout(() => {
           suppressClick.current = false
         }, 450)
+        const newCategoryId =
+          s.category_id === currentCat ? null : currentCat
         try {
-          type Patch = { category_id: string | null; is_empty: boolean }
-          const before: Record<string, Patch> = {}
-          for (const id of ids) {
-            const snap = dragBefore.current[id]
-            const s = useSeatStore.getState().seats[gender][id]
-            if (!s) continue
-            if (snap) {
-              before[id] = {
-                category_id: snap.category_id,
-                is_empty: snap.is_empty,
-              }
-            } else {
-              before[id] = {
-                category_id: s.category_id,
-                is_empty: s.is_empty,
-              }
-            }
-          }
-          await bulkAssignCategory(ids, currentCat)
-          useSeatStore.getState().bulkUpdateLocal(ids, gender, {
-            category_id: currentCat,
-            is_empty: false,
-          })
-          useSeatStore.getState().pushHistory({
-            gender,
-            seatIds: ids,
-            before,
-            after: Object.fromEntries(
-              ids.map((id) => [id, { category_id: currentCat, is_empty: false }])
-            ),
-          })
+          await persistAssignUndoable(gender, [id], newCategoryId)
         } catch (e) {
-          toast.error(e instanceof Error ? e.message : "Bulk gagal")
+          toast.error(e instanceof Error ? e.message : "Gagal")
         }
       }
-      dragBefore.current = {}
       return
     }
 
@@ -230,15 +205,6 @@ export function AssignPanel({
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Gagal")
     }
-  }
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (modeRef.current !== "assign" || !activeCategoryIdRef.current) return
-    const touch = e.touches[0]
-    if (!touch) return
-    const el = document.elementFromPoint(touch.clientX, touch.clientY)
-    const id = el?.closest("[data-seat-id]")?.getAttribute("data-seat-id")
-    if (id) paintSeat(id)
   }
 
   const saveLabel = async () => {
@@ -358,18 +324,16 @@ export function AssignPanel({
         </CardContent>
       </Card>
 
-      <div onTouchMove={onTouchMove}>
-        <SeatGrid
-          seats={seats}
-          layout={layout}
-          categories={categories}
-          mode="editor"
-          onSeatAction={handleSeatAction}
-        />
-      </div>
+      <SeatGrid
+        seats={seats}
+        layout={layout}
+        categories={categories}
+        mode="editor"
+        onSeatAction={handleSeatAction}
+      />
 
       <p className="text-center text-xs text-muted-foreground">
-        Long-press kursi untuk edit label. Drag untuk assign massal.
+        Long-press kursi untuk edit label.
       </p>
 
       <Dialog

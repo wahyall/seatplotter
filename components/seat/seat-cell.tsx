@@ -14,9 +14,43 @@ type SeatCellProps = {
   mode: SeatMode
   onAction: (
     seatId: string,
-    action: "click" | "touchstart" | "touchend" | "longpress"
+    action:
+      | "click"
+      | "touchstart"
+      | "touchend"
+      | "longpress"
+      | "touchpan"
   ) => void
   compact?: boolean
+}
+
+const PAN_CANCEL_PX = 14
+
+function attachEditorPanGuard(
+  seatId: string,
+  startX: number,
+  startY: number,
+  onAction: SeatCellProps["onAction"]
+) {
+  const onMove = (ev: TouchEvent) => {
+    if (ev.touches.length === 0) return
+    const t = ev.touches[0]
+    if (
+      Math.abs(t.clientX - startX) > PAN_CANCEL_PX ||
+      Math.abs(t.clientY - startY) > PAN_CANCEL_PX
+    ) {
+      onAction(seatId, "touchpan")
+      cleanup()
+    }
+  }
+  const cleanup = () => {
+    window.removeEventListener("touchmove", onMove, true)
+    window.removeEventListener("touchend", cleanup, true)
+    window.removeEventListener("touchcancel", cleanup, true)
+  }
+  window.addEventListener("touchmove", onMove, { capture: true, passive: true })
+  window.addEventListener("touchend", cleanup, { capture: true })
+  window.addEventListener("touchcancel", cleanup, { capture: true })
 }
 
 function SeatCellInner({
@@ -84,7 +118,17 @@ function SeatCellInner({
         animating && "animate-seat-pulse"
       )}
       onClick={() => onAction(seat.id, "click")}
-      onTouchStart={() => onAction(seat.id, "touchstart")}
+      onTouchStart={(e) => {
+        onAction(seat.id, "touchstart")
+        if (mode === "editor" && e.touches[0]) {
+          attachEditorPanGuard(
+            seat.id,
+            e.touches[0].clientX,
+            e.touches[0].clientY,
+            onAction
+          )
+        }
+      }}
       onTouchEnd={() => onAction(seat.id, "touchend")}
     >
       <span className="absolute inset-0 flex items-center justify-center px-0.5 text-center leading-none">

@@ -65,7 +65,12 @@ export default function CheckGenderPage() {
 
   const handleSeat = async (
     seatId: string,
-    action: "click" | "touchstart" | "touchend" | "longpress"
+    action:
+      | "click"
+      | "touchstart"
+      | "touchend"
+      | "longpress"
+      | "touchpan"
   ) => {
     if (action !== "click") return
     const seat = useSeatStore.getState().seats[gender][seatId]

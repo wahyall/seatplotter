@@ -8,6 +8,8 @@ import { SeatColHeader } from "@/components/seat/seat-col-header"
 import { SeatRowLabel } from "@/components/seat/seat-row-label"
 import { SeatCell, type SeatMode } from "@/components/seat/seat-cell"
 import { cn } from "@/lib/utils"
+
+/** Virtualized grid; single-seat actions via `onSeatAction`. Bulk drag-assign is not used here (editor handles tap / long-press only). */
 export function SeatGrid({
   seats,
   layout,
@@ -23,7 +25,12 @@ export function SeatGrid({
   mode: SeatMode
   onSeatAction: (
     seatId: string,
-    action: "click" | "touchstart" | "touchend" | "longpress"
+    action:
+      | "click"
+      | "touchstart"
+      | "touchend"
+      | "longpress"
+      | "touchpan"
   ) => void | Promise<void>
   className?: string
   compact?: boolean
