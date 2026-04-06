@@ -1,136 +1,152 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useParams } from "next/navigation"
-import { toast } from "sonner"
-import { motion, AnimatePresence } from "framer-motion"
-import type { Gender } from "@/types/db"
-import { useLayoutStore } from "@/store/useLayoutStore"
-import { useShallow } from "zustand/react/shallow"
-import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats"
-import { persistCheck, useSeatStore } from "@/store/useSeatStore"
-import { ConnectionBanner } from "@/components/layout/connection-banner"
-import { StageBar } from "@/components/layout/stage-bar"
-import { SeatGrid } from "@/components/seat/seat-grid"
-import { FilterChips } from "@/components/seat/filter-chips"
-import { Progress } from "@/components/ui/progress"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { XIcon, QrCodeIcon, CheckCircle2Icon } from "lucide-react"
+import * as React from "react";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Gender } from "@/types/db";
+import { useLayoutStore } from "@/store/useLayoutStore";
+import { useShallow } from "zustand/react/shallow";
+import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats";
+import { persistCheck, useSeatStore } from "@/store/useSeatStore";
+import { ConnectionBanner } from "@/components/layout/connection-banner";
+import { StageBar } from "@/components/layout/stage-bar";
+import { SeatGrid } from "@/components/seat/seat-grid";
+import { FilterChips } from "@/components/seat/filter-chips";
+import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { XIcon, QrCodeIcon, CheckCircle2Icon } from "lucide-react";
 export default function CheckGenderPage() {
-  const params = useParams()
-  const g = params.gender as string
-  const gender = (g === "male" || g === "female" ? g : null) as Gender | null
+  const params = useParams();
+  const g = params.gender as string;
+  const gender = (g === "male" || g === "female" ? g : null) as Gender | null;
   if (!gender) {
-    return (
-      <p className="text-sm text-muted-foreground">Layout tidak valid.</p>
-    )
+    return <p className="text-sm text-muted-foreground">Layout tidak valid.</p>;
   }
 
-  const layout = useLayoutStore((s) => s.layouts[gender])
-  const categories = useLayoutStore((s) => s.categories[gender])
-  const config = useLayoutStore((s) => s.config)
+  const layout = useLayoutStore((s) => s.layouts[gender]);
+  const categories = useLayoutStore((s) => s.categories[gender]);
+  const config = useLayoutStore((s) => s.config);
   const seats = useSeatStore(
-    useShallow((s) => Object.values(s.seats[gender] ?? {}))
-  )
+    useShallow((s) => Object.values(s.seats[gender] ?? {})),
+  );
 
-  const { isConnected } = useRealtimeSeats(layout?.id)
-  const scanQrUrl = config?.scan_qr_url ?? ""
+  const { isConnected } = useRealtimeSeats(layout?.id);
+  const scanQrUrl = config?.scan_qr_url ?? "";
 
-  const [filter, setFilter] = React.useState("all")
-  const [withScanQr, setWithScanQr] = React.useState(false)
-  const [qrModalSeatId, setQrModalSeatId] = React.useState<string | null>(null)
+  const [filter, setFilter] = React.useState("all");
+  const [withScanQr, setWithScanQr] = React.useState(false);
+  const [qrModalSeatId, setQrModalSeatId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("withScanQr");
+      if (saved === "true") {
+        setWithScanQr(true);
+      }
+    }
+  }, []);
+
+  const handleWithScanQrChange = (checked: boolean) => {
+    setWithScanQr(checked);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("withScanQr", String(checked));
+    }
+  };
 
   const stats = React.useMemo(() => {
-    const active = seats.filter((s) => !s.is_empty)
-    const checked = active.filter((s) => s.is_checked)
+    const active = seats.filter((s) => !s.is_empty);
+    const checked = active.filter((s) => s.is_checked);
     const pct =
       active.length > 0
         ? Math.round((checked.length / active.length) * 100)
-        : 0
-    return { total: active.length, checked: checked.length, pct }
-  }, [seats])
+        : 0;
+    return { total: active.length, checked: checked.length, pct };
+  }, [seats]);
 
   const filteredSeats = React.useMemo(() => {
-    if (filter === "all") return seats
+    if (filter === "all") return seats;
     return seats.map((s) => ({
       ...s,
       _dimmed: s.category_id !== filter,
-    }))
-  }, [seats, filter])
+    }));
+  }, [seats, filter]);
 
   const counts = React.useMemo(() => {
-    const m: Record<string, number> = { all: 0 }
+    const m: Record<string, number> = { all: 0 };
     for (const s of seats) {
-      if (s.is_empty) continue
-      m.all += 1
-      if (s.category_id) m[s.category_id] = (m[s.category_id] ?? 0) + 1
+      if (s.is_empty) continue;
+      m.all += 1;
+      if (s.category_id) m[s.category_id] = (m[s.category_id] ?? 0) + 1;
     }
-    return m
-  }, [seats])
+    return m;
+  }, [seats]);
 
-  const handleSeatRef = React.useRef<(seatId: string, action: string) => void>(() => {})
+  const handleSeatRef = React.useRef<(seatId: string, action: string) => void>(
+    () => {},
+  );
 
-  handleSeatRef.current = async (
-    seatId: string,
-    action: string,
-  ) => {
-    if (action !== "click") return
-    const seat = useSeatStore.getState().seats[gender][seatId]
-    if (!seat || seat.is_empty) return
-    if (filter !== "all" && seat.category_id !== filter) return
+  handleSeatRef.current = async (seatId: string, action: string) => {
+    if (action !== "click") return;
+    const seat = useSeatStore.getState().seats[gender][seatId];
+    if (!seat || seat.is_empty) return;
+    if (filter !== "all" && seat.category_id !== filter) return;
 
     // If scan QR mode is enabled and seat is not yet checked, open modal
     if (withScanQr && scanQrUrl && !seat.is_checked) {
-      setQrModalSeatId(seatId)
-      return
+      setQrModalSeatId(seatId);
+      return;
     }
 
-    const next = !seat.is_checked
+    const next = !seat.is_checked;
     useSeatStore.getState().updateSeatLocal(seatId, gender, {
       is_checked: next,
       checked_at: next ? new Date().toISOString() : null,
-    })
+    });
     try {
-      await persistCheck(gender, seatId, next)
+      await persistCheck(gender, seatId, next);
     } catch {
-      toast.error("Gagal update kursi")
+      toast.error("Gagal update kursi");
       useSeatStore.getState().updateSeatLocal(seatId, gender, {
         is_checked: !next,
         checked_at: null,
-      })
+      });
     }
-  }
+  };
 
   const handleSeat = React.useCallback(
-    (seatId: string, action: "click" | "touchstart" | "touchend" | "longpress" | "touchpan") => {
-      handleSeatRef.current(seatId, action)
+    (
+      seatId: string,
+      action: "click" | "touchstart" | "touchend" | "longpress" | "touchpan",
+    ) => {
+      handleSeatRef.current(seatId, action);
     },
-    []
-  )
+    [],
+  );
 
   const confirmScanAndCheck = async () => {
-    if (!qrModalSeatId || !gender) return
-    const seatId = qrModalSeatId
-    setQrModalSeatId(null)
+    if (!qrModalSeatId || !gender) return;
+    const seatId = qrModalSeatId;
+    setQrModalSeatId(null);
     useSeatStore.getState().updateSeatLocal(seatId, gender, {
       is_checked: true,
       checked_at: new Date().toISOString(),
-    })
+    });
     try {
-      await persistCheck(gender, seatId, true)
-      toast.success("Kursi berhasil dicentang")
+      await persistCheck(gender, seatId, true);
+      toast.success("Kursi berhasil dicentang");
     } catch {
-      toast.error("Gagal update kursi")
+      toast.error("Gagal update kursi");
       useSeatStore.getState().updateSeatLocal(seatId, gender, {
         is_checked: false,
         checked_at: null,
-      })
+      });
     }
-  }
+  };
 
-  if (!layout) return null
+  if (!layout) return null;
 
   return (
     <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 pb-8">
@@ -177,7 +193,7 @@ export default function CheckGenderPage() {
           <Checkbox
             id="with-scan-qr"
             checked={withScanQr}
-            onCheckedChange={(v) => setWithScanQr(v === true)}
+            onCheckedChange={(v) => handleWithScanQrChange(v === true)}
           />
           <Label
             htmlFor="with-scan-qr"
@@ -214,7 +230,9 @@ export default function CheckGenderPage() {
             <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <QrCodeIcon className="size-4 text-primary" />
-                Scan QR — {useSeatStore.getState().seats[gender][qrModalSeatId]?.label ?? qrModalSeatId}
+                Scan QR —{" "}
+                {useSeatStore.getState().seats[gender][qrModalSeatId]?.label ??
+                  qrModalSeatId}
               </div>
               <button
                 onClick={() => setQrModalSeatId(null)}
@@ -235,8 +253,8 @@ export default function CheckGenderPage() {
 
             {/* Footer action */}
             <div className="border-t border-border/60 p-4 space-y-3">
-              <p className="text-center text-sm text-muted-foreground">
-                Klik tombol di bawah ini jika Anda sudah berhasil melakukan scan QR.
+              <p className="text-center text-xs text-muted-foreground">
+                Klik tombol ini jika sudah melakukan scan QR.
               </p>
               <Button
                 onClick={confirmScanAndCheck}
@@ -251,5 +269,5 @@ export default function CheckGenderPage() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
