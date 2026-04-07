@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   ArmchairIcon,
   CheckCircle2Icon,
@@ -9,6 +9,7 @@ import {
   FileSpreadsheetIcon,
   LayoutGridIcon,
   LayoutDashboardIcon,
+  LogOutIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -23,6 +24,13 @@ const items = [
 
 export function MainNav() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <>
@@ -62,6 +70,16 @@ export function MainNav() {
             )
           })}
         </nav>
+        <button
+          onClick={handleLogout}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "default" }),
+            "h-11 w-full justify-start gap-3 rounded-xl px-3 text-muted-foreground hover:text-destructive"
+          )}
+        >
+          <LogOutIcon className="size-4 shrink-0 opacity-80" />
+          Keluar
+        </button>
       </aside>
 
       {/* Mobile bottom bar */}
