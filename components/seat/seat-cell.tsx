@@ -180,8 +180,8 @@ function SeatCellInner({
         </span>
       )}
       {seat.is_checked && !isBookingMode && mode !== "editor" && (
-        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 ring-2 ring-emerald-400 saturate-50 opacity-80">
-          <CheckIcon className="size-5 text-emerald-400 drop-shadow-lg" strokeWidth={3} />
+        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 ring-2 ring-emerald-400 saturate-50">
+          <CheckIcon className="size-5 text-white/90 drop-shadow-lg" strokeWidth={3} />
         </span>
       )}
     </button>

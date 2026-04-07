@@ -25,7 +25,10 @@ import {
   XIcon,
   UserIcon,
   SparklesIcon,
+  DownloadIcon,
 } from "lucide-react"
+import { TicketPrint } from "@/components/seat/ticket-print"
+import { exportTicketPNG } from "@/lib/export-png"
 
 export default function BookingPage() {
   const router = useRouter()
@@ -551,15 +554,35 @@ export default function BookingPage() {
 
               {bookedTickets.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {bookedTickets.map((t) => (
-                    <span
-                      key={t.id}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-medium text-emerald-400"
-                    >
-                      <CheckCircle2Icon className="size-3" />
-                      {t.nama}
-                    </span>
-                  ))}
+                  {bookedTickets.map((t) => {
+                    const seatId = t.seat_id
+                    let seatLabel = "-"
+                    if (t.jenis_kelamin === "MALE") {
+                      seatLabel = seatsM.find((s) => s.id === seatId)?.label ?? "-"
+                    } else {
+                      seatLabel = seatsF.find((s) => s.id === seatId)?.label ?? "-"
+                    }
+                    return (
+                      <span
+                        key={t.id}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 pl-2.5 pr-1 py-1 text-[10px] font-medium text-emerald-400"
+                      >
+                        <CheckCircle2Icon className="size-3" />
+                        {t.nama}
+                        <span className="bg-emerald-500/20 px-1.5 py-0.5 rounded-md text-emerald-300 ml-1">
+                          Kursi: {seatLabel}
+                        </span>
+                        <button
+                          onClick={() => exportTicketPNG(t.id, t.nama)}
+                          className="ml-1 rounded-full p-1 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 transition-colors"
+                          title="Download Tiket"
+                        >
+                          <DownloadIcon className="size-3" />
+                        </button>
+                        <TicketPrint ticket={t} seatLabel={seatLabel} config={config} />
+                      </span>
+                    )
+                  })}
                 </div>
               )}
 

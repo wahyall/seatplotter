@@ -456,7 +456,7 @@ export default function CheckGenderPage() {
                       </div>
                     </div>
 
-                    <div className="pt-4 flex flex-col gap-3">
+                    {/* <div className="pt-4 flex flex-col gap-3">
                       <button
                         onClick={toggleModalSeatCheck}
                         className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold shadow-md transition-colors ${
@@ -470,7 +470,7 @@ export default function CheckGenderPage() {
                           ? "Batalkan Kehadiran"
                           : "Tandai Hadir"}
                       </button>
-                    </div>
+                    </div> */}
                   </div>
                 ) : (
                   <div className="py-8 text-center text-sm text-muted-foreground">
