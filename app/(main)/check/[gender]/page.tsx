@@ -113,6 +113,14 @@ export default function CheckGenderPage() {
       return;
     }
 
+    if (seat.is_checked && !removeSeatMode) {
+      return;
+    }
+
+    if (seat.participant_id && !removeSeatMode) {
+      return;
+    }
+
     if (seat.participant_id) {
       if (removeSeatMode) {
         if (
@@ -152,7 +160,9 @@ export default function CheckGenderPage() {
             .maybeSingle()
             .then(({ data }) => {
               if (data) {
-                useSeatStore.getState().updateSeatLocal(seatId, gender, { participants: data });
+                useSeatStore
+                  .getState()
+                  .updateSeatLocal(seatId, gender, { participants: data });
               }
               setLoadingParticipant(false);
             });
@@ -412,7 +422,9 @@ export default function CheckGenderPage() {
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                         Nama Lengkap
                       </p>
-                      <p className="font-semibold">{activeModalSeat.participants.nama}</p>
+                      <p className="font-semibold">
+                        {activeModalSeat.participants.nama}
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
