@@ -136,7 +136,13 @@ export default function CheckGenderPage() {
               checked_at: null,
             })
             .eq("id", seatId);
-          if (!error) {
+          const { error: participantError } = await supabase
+            .from("participants")
+            .update({
+              seat_id: null,
+            })
+            .eq("id", seat.participant_id);
+          if (!error && !participantError) {
             toast.success("Kursi berhasil dikosongkan");
             useSeatStore.getState().updateSeatLocal(seatId, gender, {
               participant_id: null,
