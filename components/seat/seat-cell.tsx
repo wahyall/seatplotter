@@ -156,13 +156,13 @@ function SeatCellInner({
       {/* Booking mode: booked by others */}
       {booked && !mine && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40">
-          {seat._mineInitial ? (
+          {/* {seat._mineInitial ? (
             <span className="text-[12px] font-black text-white/60 drop-shadow-md tracking-tighter" style={{ lineHeight: 1 }}>
               {seat._mineInitial?.substring(0, 2)}
             </span>
           ) : (
-            <UserIcon className="size-3 text-white/80" strokeWidth={2.5} />
-          )}
+          )} */}
+          <UserIcon className="size-3 text-white/80" strokeWidth={2.5} />
         </span>
       )}
       {/* Booking mode: my seat */}
