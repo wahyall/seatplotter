@@ -6,6 +6,7 @@ import {
   ArmchairIcon,
   CheckCircle2Icon,
   EyeIcon,
+  FileSpreadsheetIcon,
   LayoutGridIcon,
   LayoutDashboardIcon,
 } from "lucide-react"
@@ -17,6 +18,7 @@ const items = [
   { href: "/editor", label: "Edit", icon: LayoutGridIcon },
   { href: "/view", label: "Lihat", icon: EyeIcon },
   { href: "/check", label: "Centang", icon: CheckCircle2Icon },
+  { href: "/participants", label: "Peserta", icon: FileSpreadsheetIcon },
 ] as const
 
 export function MainNav() {

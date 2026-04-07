@@ -66,14 +66,7 @@ export function GridSetup({
 
   const handleGenerate = async () => {
     if (!validation.valid || loading) return
-    const hasSeats = seatCount > 0
-    const confirmed = hasSeats
-      ? typeof window !== "undefined" &&
-        window.confirm(
-          `Generate akan menghapus ${seatCount} kursi yang ada. Lanjutkan?`
-        )
-      : true
-    if (!confirmed) return
+    // No more confirmation dialog needed since generate endpoint syncs instead of replace
 
     setLoading(true)
     try {
@@ -232,14 +225,7 @@ export function GridSetup({
           </Alert>
         )}
 
-        {seatCount > 0 && (
-          <Alert>
-            <AlertTriangleIcon className="text-amber-500" />
-            <AlertDescription>
-              Generate akan menghapus {seatCount} kursi yang ada.
-            </AlertDescription>
-          </Alert>
-        )}
+
 
         <Button
           className="h-12 w-full touch-manipulation rounded-xl text-base sm:h-10 sm:text-sm"

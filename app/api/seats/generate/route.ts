@@ -32,19 +32,24 @@ export async function POST(req: Request) {
     )
   }
 
-  const { error: deleteErr } = await supabaseAdmin
+  const { data: existingSeats, error: fetchErr } = await supabaseAdmin
     .from("seats")
-    .delete()
+    .select("id, row, col, label")
     .eq("layout_id", layoutId)
 
-  if (deleteErr) {
+  if (fetchErr) {
     return Response.json(
-      { success: false, error: deleteErr.message },
+      { success: false, error: fetchErr.message },
       { status: 500 }
     )
   }
 
-  const seats = generateSeatsForLayout(
+  const existingMap = new Map<string, typeof existingSeats[0]>()
+  for (const seat of existingSeats) {
+    existingMap.set(`${seat.row}-${seat.col}`, seat)
+  }
+
+  const idealSeats = generateSeatsForLayout(
     layoutId,
     layout.rows,
     layout.cols,
@@ -52,20 +57,71 @@ export async function POST(req: Request) {
     layout.reverse_col
   )
 
-  const CHUNK = 200
-  for (let i = 0; i < seats.length; i += CHUNK) {
-    const chunk = seats.slice(i, i + CHUNK)
-    const { error: insertErr } = await supabaseAdmin.from("seats").insert(chunk)
-    if (insertErr) {
-      return Response.json(
-        { success: false, error: insertErr.message },
-        { status: 500 }
+  const toInsert = []
+  const toUpdate: { id: string; label: string }[] = []
+  const validIds = new Set<string>()
+
+  for (const idealSeat of idealSeats) {
+    const key = `${idealSeat.row}-${idealSeat.col}`
+    const existing = existingMap.get(key)
+    if (existing) {
+      validIds.add(existing.id)
+      if (existing.label !== idealSeat.label) {
+        toUpdate.push({ id: existing.id, label: idealSeat.label })
+      }
+    } else {
+      toInsert.push(idealSeat)
+    }
+  }
+
+  const toDeleteIds = existingSeats
+    .filter((s) => !validIds.has(s.id))
+    .map((s) => s.id)
+
+  if (toDeleteIds.length > 0) {
+    const CHUNK = 200
+    for (let i = 0; i < toDeleteIds.length; i += CHUNK) {
+      const { error: delErr } = await supabaseAdmin
+        .from("seats")
+        .delete()
+        .in("id", toDeleteIds.slice(i, i + CHUNK))
+      if (delErr) {
+        return Response.json(
+          { success: false, error: delErr.message },
+          { status: 500 }
+        )
+      }
+    }
+  }
+
+  if (toUpdate.length > 0) {
+    const CHUNK = 50
+    for (let i = 0; i < toUpdate.length; i += CHUNK) {
+      const chunk = toUpdate.slice(i, i + CHUNK)
+      await Promise.all(
+        chunk.map((u) =>
+          supabaseAdmin!.from("seats").update({ label: u.label }).eq("id", u.id)
+        )
       )
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const CHUNK = 200
+    for (let i = 0; i < toInsert.length; i += CHUNK) {
+      const chunk = toInsert.slice(i, i + CHUNK)
+      const { error: insertErr } = await supabaseAdmin.from("seats").insert(chunk)
+      if (insertErr) {
+        return Response.json(
+          { success: false, error: insertErr.message },
+          { status: 500 }
+        )
+      }
     }
   }
 
   return Response.json({
     success: true,
-    data: { count: seats.length },
+    data: { count: idealSeats.length },
   })
 }

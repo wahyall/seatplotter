@@ -1,15 +1,24 @@
 "use client"
 
 import * as React from "react"
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, UserIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { CategoryRow, SeatRow, SeatWithDim } from "@/types/db"
 import { useSeatStore } from "@/store/useSeatStore"
 
-export type SeatMode = "editor" | "view" | "check"
+export type SeatMode = "editor" | "view" | "check" | "booking"
+
+export type SeatBookingState = {
+  /** Seat is booked by someone (has participant_id) */
+  _booked?: boolean
+  /** Seat is booked by the current user (mine) */
+  _mine?: boolean
+  /** Initial of the participant for internal UI rendering */
+  _mineInitial?: string
+}
 
 type SeatCellProps = {
-  seat: SeatWithDim
+  seat: SeatWithDim & SeatBookingState
   category?: CategoryRow
   mode: SeatMode
   onAction: (
@@ -97,15 +106,23 @@ function SeatCellInner({
   }
 
   const dim = seat._dimmed ? "opacity-[0.2]" : ""
+  const isBookingMode = mode === "booking"
+  const isCheckMode = mode === "check"
+  
+  const booked = isBookingMode && seat._booked
+  const mine = isBookingMode && seat._mine
+
   const checkedStyle =
-    mode !== "editor" && seat.is_checked ? "opacity-50" : ""
+    isCheckMode && seat.is_checked ? "opacity-[0.4]" : ""
 
   return (
     <button
       type="button"
       data-seat-id={seat.id}
       style={{
-        backgroundColor: category?.color ?? "hsl(240 5% 22%)",
+        backgroundColor: booked && !mine
+          ? "hsl(240 5% 28%)"
+          : category?.color ?? "hsl(240 5% 22%)",
         width: "var(--seat-size, 34px)",
         height: "var(--seat-size, 34px)",
       }}
@@ -115,7 +132,9 @@ function SeatCellInner({
         "active:scale-90",
         dim,
         checkedStyle,
-        animating && "animate-seat-pulse"
+        animating && "animate-seat-pulse",
+        booked && !mine && "cursor-not-allowed opacity-40",
+        mine && "ring-2 ring-blue-500 ring-offset-1 ring-offset-background"
       )}
       onClick={() => onAction(seat.id, "click")}
       onTouchStart={(e) => {
@@ -134,9 +153,35 @@ function SeatCellInner({
       <span className="absolute inset-0 flex items-center justify-center px-0.5 text-center leading-none">
         {seat.label}
       </span>
-      {seat.is_checked && mode !== "editor" && (
-        <span className="absolute inset-0 flex items-center justify-center bg-black/25">
-          <CheckIcon className="size-4 text-white drop-shadow-md" strokeWidth={3} />
+      {/* Booking mode: booked by others */}
+      {booked && !mine && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40">
+          {seat._mineInitial ? (
+            <span className="text-[12px] font-black text-white/60 drop-shadow-md tracking-tighter" style={{ lineHeight: 1 }}>
+              {seat._mineInitial?.substring(0, 2)}
+            </span>
+          ) : (
+            <UserIcon className="size-3 text-white/80" strokeWidth={2.5} />
+          )}
+        </span>
+      )}
+      {/* Booking mode: my seat */}
+      {mine && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-blue-200/80 ring-2 ring-blue-400 ring-offset-1 ring-offset-background">
+          <span className="text-[12px] font-black text-slate-800 drop-shadow-md tracking-tighter" style={{ lineHeight: 1 }}>
+            {seat._mineInitial?.substring(0, 2) ?? "✓"}
+          </span>
+        </span>
+      )}
+      {/* Check mode overrides: booked (selected) or checked-in */}
+      {isCheckMode && seat.participant_id && !seat.is_checked && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50">
+          <UserIcon className="size-3.5 text-white/90 drop-shadow-sm" strokeWidth={2.5} />
+        </span>
+      )}
+      {seat.is_checked && !isBookingMode && mode !== "editor" && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 ring-2 ring-emerald-400 saturate-50 opacity-80">
+          <CheckIcon className="size-5 text-emerald-400 drop-shadow-lg" strokeWidth={3} />
         </span>
       )}
     </button>
@@ -149,9 +194,13 @@ function areEqual(prev: SeatCellProps, next: SeatCellProps) {
   return (
     prev.seat.is_checked === next.seat.is_checked &&
     prev.seat.category_id === next.seat.category_id &&
+    prev.seat.participant_id === next.seat.participant_id &&
     prev.seat.is_empty === next.seat.is_empty &&
     prev.seat.label === next.seat.label &&
     prev.seat._dimmed === next.seat._dimmed &&
+    prev.seat._booked === next.seat._booked &&
+    prev.seat._mine === next.seat._mine &&
+    prev.seat._mineInitial === next.seat._mineInitial &&
     prev.mode === next.mode &&
     prev.category?.color === next.category?.color &&
     prev.compact === next.compact

@@ -36,11 +36,25 @@ export interface SeatRow {
   col: number
   label: string
   category_id: string | null
+  participant_id: string | null
   is_empty: boolean
   is_checked: boolean
   checked_at: string | null
   updated_at: string
+  participants?: Partial<ParticipantRow> | null
 }
 
 /** Client-only dim flag for view filter */
 export type SeatWithDim = SeatRow & { _dimmed?: boolean }
+
+export interface ParticipantRow {
+  id: string
+  nama: string
+  email: string
+  jenis_kelamin: string
+  telepon: string
+  tiket: string
+  kode_tiket: string
+  seat_id: string | null
+  created_at: string
+}

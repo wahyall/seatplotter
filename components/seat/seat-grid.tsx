@@ -6,7 +6,7 @@ import { getColHeaders } from "@/lib/seat-label"
 import type { CategoryRow, LayoutRow, SeatWithDim } from "@/types/db"
 import { SeatColHeader } from "@/components/seat/seat-col-header"
 import { SeatRowLabel } from "@/components/seat/seat-row-label"
-import { SeatCell, type SeatMode } from "@/components/seat/seat-cell"
+import { SeatCell, type SeatMode, type SeatBookingState } from "@/components/seat/seat-cell"
 import { cn } from "@/lib/utils"
 import { useLayoutStore } from "@/store/useLayoutStore"
 
@@ -20,7 +20,7 @@ export function SeatGrid({
   className,
   compact,
 }: {
-  seats: SeatWithDim[]
+  seats: (SeatWithDim & SeatBookingState)[]
   layout: LayoutRow
   categories: CategoryRow[]
   mode: SeatMode

@@ -9,7 +9,7 @@ export async function fetchSeats(layoutId: string): Promise<SeatRow[]> {
   for (;;) {
     const { data, error } = await supabase
       .from("seats")
-      .select("*")
+      .select("*, participants!seats_participant_id_fkey(*)")
       .eq("layout_id", layoutId)
       .order("row", { ascending: true })
       .order("col", { ascending: true })
