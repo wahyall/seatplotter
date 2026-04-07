@@ -44,7 +44,7 @@ export default function BookingPage() {
   const seatsM = useSeatStore(useShallow((s) => Object.values(s.seats.male ?? {})))
   const seatsF = useSeatStore(useShallow((s) => Object.values(s.seats.female ?? {})))
 
-  const { isConnected: isRealtimeConnected } = useRealtimeSeats([layoutM?.id, layoutF?.id])
+  const { isConnected: isRealtimeConnected } = useRealtimeSeats([layoutM?.id, layoutF?.id].filter(Boolean) as string[])
   const { isConnected: isPresenceConnected, globalDrafts, localDrafts, draftSeatLocal, clearLocalDraftForParticipant, sessionId } = useSeatPresence({
     onDraftLost: (seatId, participantId) => {
       import("sonner").then(m => m.toast.error("Maaf, kursi ini gagal didraft karena keduluan peserta lain!"))
