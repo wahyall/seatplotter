@@ -1,154 +1,166 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { supabase } from "@/lib/supabase"
-import { v4 as uuidv4 } from "uuid"
+import { getSocket, getSessionId } from "@/lib/socket"
 
 export type DraftState = {
   seatId: string
   participantId: string
   nama: string
   timestamp: number
-  sessionId: string // Unique ID for the browser session to distinguish our own drafts
+  sessionId: string
 }
 
-export function useSeatPresence(options?: { onDraftLost?: (seatId: string, participantId: string) => void }) {
-  const [globalDrafts, setGlobalDrafts] = useState<Record<string, DraftState>>({})
+type PresenceEntry = {
+  drafts: Record<string, DraftState>
+}
+
+export function useSeatPresence(options?: {
+  onDraftLost?: (seatId: string, participantId: string) => void
+}) {
+  const [globalDrafts, setGlobalDrafts] = useState<Record<string, DraftState>>(
+    {},
+  )
   const [localDrafts, setLocalDrafts] = useState<Record<string, DraftState>>({})
   const [isConnected, setIsConnected] = useState(false)
-  
-  const sessionId = useRef(uuidv4()).current
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  // Subscribe to presence
+  const sessionId = useRef(getSessionId()).current
+
   useEffect(() => {
-    const channel = supabase.channel("seat-presence-v1", {
-      config: { presence: { key: sessionId } },
-    })
+    const socket = getSocket()
+    if (!socket) return
 
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState<{ drafts?: Record<string, DraftState> }>()
-        
-        // 1. Flatten all drafts from all peers and connections
-        let flatDrafts: DraftState[] = []
-        for (const presenceItems of Object.values(state)) {
-          for (const item of presenceItems) {
-            if (item.drafts) {
-              flatDrafts.push(...Object.values(item.drafts))
+    const onConnect = () => setIsConnected(true)
+    const onDisconnect = () => setIsConnected(false)
+
+    const onPresenceSync = (state: Record<string, PresenceEntry>) => {
+      // 1. Flatten all drafts from all peers
+      let flatDrafts: DraftState[] = []
+      for (const entry of Object.values(state)) {
+        if (entry.drafts) {
+          flatDrafts.push(...Object.values(entry.drafts))
+        }
+      }
+
+      // 2. Keep only the latest draft per participant
+      const latestDraftPerParticipant = new Map<string, DraftState>()
+      for (const draft of flatDrafts) {
+        const existing = latestDraftPerParticipant.get(draft.participantId)
+        if (!existing || draft.timestamp > existing.timestamp) {
+          latestDraftPerParticipant.set(draft.participantId, draft)
+        }
+      }
+
+      const validDrafts = Array.from(latestDraftPerParticipant.values())
+
+      // 3. Conflict resolution: first-click-wins per seat
+      const resolvedDrafts: Record<string, DraftState> = {}
+      for (const draft of validDrafts) {
+        const existing = resolvedDrafts[draft.seatId]
+        if (!existing || draft.timestamp < existing.timestamp) {
+          resolvedDrafts[draft.seatId] = draft
+        }
+      }
+
+      setGlobalDrafts(resolvedDrafts)
+
+      // Evaluate if we lost any race conditions locally
+      setLocalDrafts((prev) => {
+        let hasLoss = false
+        const next = { ...prev }
+        for (const [seatId, localDraft] of Object.entries(next)) {
+          const winner = resolvedDrafts[seatId]
+          if (winner && winner.sessionId !== localDraft.sessionId) {
+            delete next[seatId]
+            hasLoss = true
+
+            if (options?.onDraftLost) {
+              setTimeout(
+                () => options.onDraftLost?.(seatId, localDraft.participantId),
+                0,
+              )
             }
           }
         }
-
-        // 2. Enforce 1-Seat-Per-Participant globally (prevent multi-tab/ghost connection duplication).
-        // If a participant has multiple drafts across different presence endpoints, keep only their LATEST click.
-        const latestDraftPerParticipant = new Map<string, DraftState>()
-        for (const draft of flatDrafts) {
-          const existing = latestDraftPerParticipant.get(draft.participantId)
-          if (!existing || draft.timestamp > existing.timestamp) {
-            latestDraftPerParticipant.set(draft.participantId, draft)
-          }
-        }
-        
-        const validDrafts = Array.from(latestDraftPerParticipant.values())
-
-        // 3. Conflict Resolution across multiple distinct participants fighting for the SAME seat.
-        // "First click wins" based on earliest timestamp for the given seatId
-        const resolvedDrafts: Record<string, DraftState> = {}
-        for (const draft of validDrafts) {
-          const existing = resolvedDrafts[draft.seatId]
-          if (!existing || draft.timestamp < existing.timestamp) {
-             resolvedDrafts[draft.seatId] = draft
-          }
-        }
-
-        setGlobalDrafts(resolvedDrafts)
-
-        // Evaluate if we lost any race conditions locally
-        setLocalDrafts((prev) => {
-          let hasLoss = false
-          const next = { ...prev }
-          for (const [seatId, localDraft] of Object.entries(next)) {
-            const winner = resolvedDrafts[seatId]
-            if (winner && winner.sessionId !== localDraft.sessionId) {
-              // We lost the race to a different connection with an earlier timestamp!
-              delete next[seatId]
-              hasLoss = true
-              
-              if (options?.onDraftLost) {
-                // Defer callback to avoid React render queue clashing
-                setTimeout(() => options.onDraftLost?.(seatId, localDraft.participantId), 0)
-              }
-            }
-          }
-          return hasLoss ? next : prev
-        })
+        return hasLoss ? next : prev
       })
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          setIsConnected(true)
-        } else {
-          setIsConnected(false)
-        }
-      })
+    }
 
-    channelRef.current = channel
+    socket.on("connect", onConnect)
+    socket.on("disconnect", onDisconnect)
+    socket.on("presence:sync", onPresenceSync)
+
+    if (socket.connected) setIsConnected(true)
 
     return () => {
-      void supabase.removeChannel(channel)
-      channelRef.current = null
+      socket.off("connect", onConnect)
+      socket.off("disconnect", onDisconnect)
+      socket.off("presence:sync", onPresenceSync)
     }
   }, [sessionId])
 
-  // Broadcast local drafts when they change
+  // Emit local drafts to server when they change
   useEffect(() => {
-    if (isConnected && channelRef.current) {
-      channelRef.current.track({ drafts: localDrafts })
-    }
+    if (!isConnected) return
+    const socket = getSocket()
+    if (!socket) return
+    socket.emit("presence:track", { drafts: localDrafts })
   }, [localDrafts, isConnected])
 
-  const draftSeatLocal = useCallback((seatId: string, participantId: string, nama: string, previousSeatId?: string | null) => {
-    setLocalDrafts((prev) => {
-      const next = { ...prev }
-      
-      // If we are swapping, clear the previously drafted seat for this participant
-      if (previousSeatId && next[previousSeatId]?.participantId === participantId) {
-        delete next[previousSeatId]
-      }
-      
-      // Or if the participant drafted something else, clear that too (ensure 1 seat per participant draft max)
-      for (const [sId, draft] of Object.entries(next)) {
-        if (draft.participantId === participantId) {
-          delete next[sId]
+  const draftSeatLocal = useCallback(
+    (
+      seatId: string,
+      participantId: string,
+      nama: string,
+      previousSeatId?: string | null,
+    ) => {
+      setLocalDrafts((prev) => {
+        const next = { ...prev }
+
+        if (
+          previousSeatId &&
+          next[previousSeatId]?.participantId === participantId
+        ) {
+          delete next[previousSeatId]
         }
-      }
 
-      next[seatId] = {
-        seatId,
-        participantId,
-        nama,
-        timestamp: Date.now(),
-        sessionId,
-      }
-      return next
-    })
-  }, [sessionId])
-
-  const clearLocalDraftForParticipant = useCallback((participantId: string) => {
-    setLocalDrafts((prev) => {
-      const next = { ...prev }
-      let changed = false
-      for (const [sId, draft] of Object.entries(next)) {
-        if (draft.participantId === participantId) {
-          delete next[sId]
-          changed = true
+        for (const [sId, draft] of Object.entries(next)) {
+          if (draft.participantId === participantId) {
+            delete next[sId]
+          }
         }
-      }
-      return changed ? next : prev
-    })
-  }, [])
 
-  // Merge local heavily over global to avoid ghosting before sync arrives
+        next[seatId] = {
+          seatId,
+          participantId,
+          nama,
+          timestamp: Date.now(),
+          sessionId,
+        }
+        return next
+      })
+    },
+    [sessionId],
+  )
+
+  const clearLocalDraftForParticipant = useCallback(
+    (participantId: string) => {
+      setLocalDrafts((prev) => {
+        const next = { ...prev }
+        let changed = false
+        for (const [sId, draft] of Object.entries(next)) {
+          if (draft.participantId === participantId) {
+            delete next[sId]
+            changed = true
+          }
+        }
+        return changed ? next : prev
+      })
+    },
+    [],
+  )
+
+  // Merge local over global, filtering out our own global entries to avoid ghosting
   const activeGlobalDrafts = { ...globalDrafts }
   for (const [key, draft] of Object.entries(activeGlobalDrafts)) {
     if (draft.sessionId === sessionId) {

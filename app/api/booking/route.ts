@@ -1,4 +1,14 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Server as SocketIOServer } from "socket.io";
+
+function emitSeatUpdate(layoutId: string, seat: Record<string, unknown>) {
+  const io = (globalThis as Record<string, unknown>).__io as
+    | SocketIOServer
+    | undefined;
+  if (io) {
+    io.to(`seats:${layoutId}`).emit("seat:updated", { layoutId, seat });
+  }
+}
 
 /**
  * POST /api/booking
@@ -115,6 +125,14 @@ export async function POST(req: Request) {
         { status: 500 },
       );
     }
+
+    // Emit freed seat update via Socket.IO
+    const { data: freedSeat } = await supabaseAdmin
+      .from("seats")
+      .select("*")
+      .eq("id", old_seat_id)
+      .single();
+    if (freedSeat) emitSeatUpdate(freedSeat.layout_id, freedSeat);
   }
 
   // 5. Atomic booking — update new seat
@@ -222,6 +240,14 @@ export async function POST(req: Request) {
       { status: 409 },
     );
   }
+
+  // Emit the booked seat update via Socket.IO
+  const { data: bookedSeat } = await supabaseAdmin
+    .from("seats")
+    .select("*, participants!seats_participant_id_fkey(*)")
+    .eq("id", seat_id)
+    .single();
+  if (bookedSeat) emitSeatUpdate(bookedSeat.layout_id, bookedSeat);
 
   return Response.json({ success: true });
 }

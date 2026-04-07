@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import { getSocket } from "@/lib/socket"
 import type { SeatRow } from "@/types/db"
 
 /** PostgREST defaults to 1000 rows per request — paginate so large grids load every seat. */
@@ -23,6 +24,20 @@ export async function fetchSeats(layoutId: string): Promise<SeatRow[]> {
   return all
 }
 
+function emitSeatUpdated(seat: SeatRow) {
+  const socket = getSocket()
+  if (socket?.connected) {
+    socket.emit("seat:updated", { layoutId: seat.layout_id, seat })
+  }
+}
+
+function emitSeatBulkUpdated(layoutId: string, seats: SeatRow[]) {
+  const socket = getSocket()
+  if (socket?.connected) {
+    socket.emit("seat:bulk-updated", { layoutId, seats })
+  }
+}
+
 const ALLOWED = ["label", "category_id", "is_empty"] as const
 
 export async function updateSeat(
@@ -36,11 +51,14 @@ export async function updateSeat(
     )
   ) as Partial<Pick<SeatRow, "label" | "category_id" | "is_empty">>
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("seats")
     .update({ ...safe, updated_at: new Date().toISOString() })
     .eq("id", id)
+    .select()
+    .single()
   if (error) throw error
+  if (data) emitSeatUpdated(data as SeatRow)
 }
 
 export async function bulkAssignCategory(
@@ -59,12 +77,20 @@ export async function bulkAssignCategory(
   if (categoryId !== null) {
     payload.is_empty = false
   }
-  const { error } = await supabase.from("seats").update(payload).in("id", seatIds)
+  const { data, error } = await supabase
+    .from("seats")
+    .update(payload)
+    .in("id", seatIds)
+    .select()
   if (error) throw error
+  if (data?.length) {
+    const layoutId = (data[0] as SeatRow).layout_id
+    emitSeatBulkUpdated(layoutId, data as SeatRow[])
+  }
 }
 
 export async function checkSeat(id: string, isChecked: boolean): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("seats")
     .update({
       is_checked: isChecked,
@@ -72,5 +98,8 @@ export async function checkSeat(id: string, isChecked: boolean): Promise<void> {
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
+    .select()
+    .single()
   if (error) throw error
+  if (data) emitSeatUpdated(data as SeatRow)
 }

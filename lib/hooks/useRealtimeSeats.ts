@@ -1,18 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { getSocket } from "@/lib/socket"
 import { fetchSeats } from "@/lib/seats"
 import { useSeatStore } from "@/store/useSeatStore"
+import type { SeatRow } from "@/types/db"
 
-/**
- * Subscribes to seat row updates. Effect deps are only layout ids so we never
- * tear down channels just because zustand action references changed (which
- * would cause subscribe loops and "Maximum update depth exceeded").
- */
 export function useRealtimeSeats(layoutIds: string | string[] | undefined) {
   const [isConnected, setIsConnected] = useState(false)
-  const subscribedLayouts = useRef(new Set<string>())
+  const joinedLayouts = useRef(new Set<string>())
 
   const ids = Array.isArray(layoutIds)
     ? layoutIds.filter(Boolean)
@@ -24,45 +20,80 @@ export function useRealtimeSeats(layoutIds: string | string[] | undefined) {
 
   useEffect(() => {
     if (!ids.length) return
-    subscribedLayouts.current = new Set()
 
-    const channels = ids.map((layoutId) =>
-      supabase
-        .channel(`seats-${layoutId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "seats",
-            filter: `layout_id=eq.${layoutId}`,
-          },
-          (payload) => {
-            useSeatStore.getState().applyRealtimeUpdate(payload.new as never)
-          }
-        )
-        .subscribe(async (status) => {
-          if (status === "SUBSCRIBED") {
-            subscribedLayouts.current.add(layoutId)
-            if (subscribedLayouts.current.size >= ids.length) {
-              setIsConnected(true)
-            }
-            const data = await fetchSeats(layoutId)
-            const gender = useSeatStore.getState().layoutIdMap[layoutId]
-            if (gender) {
-              useSeatStore.getState().setSeats(gender, data, layoutId)
-            }
-          } else {
-            setIsConnected(false)
+    const socket = getSocket()
+    if (!socket) return
+
+    joinedLayouts.current = new Set()
+
+    const onConnect = () => {
+      setIsConnected(true)
+      for (const layoutId of ids) {
+        socket.emit("join-layout", layoutId)
+      }
+      // Refetch seats on (re)connect to ensure we have the latest state
+      for (const layoutId of ids) {
+        fetchSeats(layoutId).then((data) => {
+          const gender = useSeatStore.getState().layoutIdMap[layoutId]
+          if (gender) {
+            useSeatStore.getState().setSeats(gender, data, layoutId)
           }
         })
-    )
+      }
+    }
+
+    const onDisconnect = () => {
+      setIsConnected(false)
+    }
+
+    const onSeatUpdated = (data: { layoutId: string; seat: SeatRow }) => {
+      useSeatStore.getState().applyRealtimeUpdate(data.seat)
+    }
+
+    const onSeatBulkUpdated = (data: {
+      layoutId: string
+      seats: SeatRow[]
+    }) => {
+      for (const seat of data.seats) {
+        useSeatStore.getState().applyRealtimeUpdate(seat)
+      }
+    }
+
+    // Join rooms for each layout
+    for (const layoutId of ids) {
+      socket.emit("join-layout", layoutId)
+      joinedLayouts.current.add(layoutId)
+    }
+
+    socket.on("connect", onConnect)
+    socket.on("disconnect", onDisconnect)
+    socket.on("seat:updated", onSeatUpdated)
+    socket.on("seat:bulk-updated", onSeatBulkUpdated)
+
+    // Set initial connection state
+    if (socket.connected) {
+      setIsConnected(true)
+      // Refetch on initial mount when already connected
+      for (const layoutId of ids) {
+        fetchSeats(layoutId).then((data) => {
+          const gender = useSeatStore.getState().layoutIdMap[layoutId]
+          if (gender) {
+            useSeatStore.getState().setSeats(gender, data, layoutId)
+          }
+        })
+      }
+    }
 
     return () => {
-      subscribedLayouts.current.clear()
-      channels.forEach((ch) => {
-        void supabase.removeChannel(ch)
-      })
+      for (const layoutId of joinedLayouts.current) {
+        socket.emit("leave-layout", layoutId)
+      }
+      joinedLayouts.current.clear()
+
+      socket.off("connect", onConnect)
+      socket.off("disconnect", onDisconnect)
+      socket.off("seat:updated", onSeatUpdated)
+      socket.off("seat:bulk-updated", onSeatBulkUpdated)
     }
   }, [key])
 

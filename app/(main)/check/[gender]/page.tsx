@@ -25,6 +25,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getSocket } from "@/lib/socket";
 export default function CheckGenderPage() {
   const params = useParams();
   const g = params.gender as string;
@@ -128,14 +129,17 @@ export default function CheckGenderPage() {
             `Yakin ingin mengosongkan kursi ini (Peserta: ${seat.participants?.nama ?? "Tanpa Nama"})?`,
           )
         ) {
-          const { error } = await supabase
+          const { data: updatedSeat, error } = await supabase
             .from("seats")
             .update({
               participant_id: null,
               is_checked: false,
               checked_at: null,
+              updated_at: new Date().toISOString(),
             })
-            .eq("id", seatId);
+            .eq("id", seatId)
+            .select()
+            .single();
           if (!error) {
             toast.success("Kursi berhasil dikosongkan");
             useSeatStore.getState().updateSeatLocal(seatId, gender, {
@@ -144,6 +148,15 @@ export default function CheckGenderPage() {
               checked_at: null,
               participants: null,
             });
+            if (updatedSeat) {
+              const socket = getSocket();
+              if (socket?.connected) {
+                socket.emit("seat:updated", {
+                  layoutId: updatedSeat.layout_id,
+                  seat: updatedSeat,
+                });
+              }
+            }
           } else {
             toast.error("Gagal mengosongkan kursi");
           }
