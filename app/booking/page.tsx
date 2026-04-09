@@ -57,6 +57,8 @@ export default function BookingPage() {
   const [tickets, setTickets] = React.useState<ValidatedTicket[]>([])
   const [selectedTicketId, setSelectedTicketId] = React.useState<string | null>(null)
   const [booking, setBooking] = React.useState(false)
+  const [microLoading, setMicroLoading] = React.useState(false)
+  const isProcessingRef = React.useRef(false)
   const [activeTab, setActiveTab] = React.useState<Gender>("male")
 
   // Scan modal state
@@ -236,29 +238,40 @@ export default function BookingPage() {
        return
     }
 
-    const oldSeatId = ticket.seat_id
-    
-    if (draft && draft.participantId === ticket.id && seatId === oldSeatId) {
-      clearLocalDraftForParticipant(ticket.id)
+    isProcessingRef.current = true
+    setMicroLoading(true)
+
+    try {
+      const oldSeatId = ticket.seat_id
+      
+      if (draft && draft.participantId === ticket.id && seatId === oldSeatId) {
+        clearLocalDraftForParticipant(ticket.id)
+        setTickets((prev) =>
+          prev.map((t) =>
+            t.id === ticket.id ? { ...t, seat_id: null } : t
+          )
+        )
+        // toast.success(`Draft kursi batal`)
+        await new Promise((r) => setTimeout(r, 400))
+        return
+      }
+
+      // Update local ticket pointer
       setTickets((prev) =>
         prev.map((t) =>
-          t.id === ticket.id ? { ...t, seat_id: null } : t
+          t.id === ticket.id ? { ...t, seat_id: seatId } : t
         )
       )
-      // toast.success(`Draft kursi batal`)
-      return
+
+      // Broadcast our draft to Presence
+      draftSeatLocal(seatId, ticket.id, ticket.nama, oldSeatId)
+      toast.success(`Kursi ${seat.label} didraft untuk ${ticket.nama}. Klik Simpan untuk mengunci!`)
+      
+      await new Promise((r) => setTimeout(r, 400))
+    } finally {
+      isProcessingRef.current = false
+      setMicroLoading(false)
     }
-
-    // Update local ticket pointer
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === ticket.id ? { ...t, seat_id: seatId } : t
-      )
-    )
-
-    // Broadcast our draft to Presence
-    draftSeatLocal(seatId, ticket.id, ticket.nama, oldSeatId)
-    toast.success(`Kursi ${seat.label} didraft untuk ${ticket.nama}. Klik Simpan untuk mengunci!`)
   }
 
   const handleSeatClickM = React.useCallback(
@@ -458,11 +471,11 @@ export default function BookingPage() {
           )}
         </div>
 
-        {booking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-3">
+        {(booking || microLoading) && (
+          <div className={`fixed inset-0 z-50 flex items-center justify-center ${booking ? 'bg-background/80 backdrop-blur-sm' : 'bg-transparent'}`}>
+            <div className={`flex flex-col items-center gap-3 ${microLoading && !booking ? 'rounded-2xl border border-border/50 bg-background/90 p-6 shadow-xl backdrop-blur-md' : ''}`}>
               <Loader2Icon className="size-8 animate-spin text-primary" />
-              <p className="text-sm font-medium">Memproses booking...</p>
+              <p className="text-sm font-medium">{booking ? "Memproses booking..." : "Memproses..."}</p>
             </div>
           </div>
         )}
