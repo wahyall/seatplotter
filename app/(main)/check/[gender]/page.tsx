@@ -8,7 +8,7 @@ import type { Gender } from "@/types/db";
 import { useLayoutStore } from "@/store/useLayoutStore";
 import { useShallow } from "zustand/react/shallow";
 import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats";
-import { persistCheck, useSeatStore } from "@/store/useSeatStore";
+import { persistCheck, persistGoodieBag, useSeatStore } from "@/store/useSeatStore";
 import { ConnectionBanner } from "@/components/layout/connection-banner";
 import { StageBar } from "@/components/layout/stage-bar";
 import { SeatGrid } from "@/components/seat/seat-grid";
@@ -23,7 +23,9 @@ import {
   CheckCircle2Icon,
   UserIcon,
   Trash2Icon,
+  GiftIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 export default function CheckGenderPage() {
   const params = useParams();
@@ -48,6 +50,7 @@ export default function CheckGenderPage() {
   const [qrModalSeatId, setQrModalSeatId] = React.useState<string | null>(null);
 
   const [removeSeatMode, setRemoveSeatMode] = React.useState(false);
+  const [pageMode, setPageMode] = React.useState<"check" | "goodie_bag">("check");
   const [participantInfoSeatId, setParticipantInfoSeatId] = React.useState<
     string | null
   >(null);
@@ -71,13 +74,20 @@ export default function CheckGenderPage() {
 
   const stats = React.useMemo(() => {
     const active = seats.filter((s) => !s.is_empty);
-    const checked = active.filter((s) => s.is_checked);
+    const checked = active.filter((s) =>
+      pageMode === "check" ? s.is_checked : s.is_goodie_bag,
+    );
     const pct =
       active.length > 0
         ? Math.round((checked.length / active.length) * 100)
         : 0;
-    return { total: active.length, checked: checked.length, pct };
-  }, [seats]);
+    return {
+      total: active.length,
+      checked: checked.length,
+      pct,
+      label: pageMode === "check" ? "Hadir" : "Goodie Bag",
+    };
+  }, [seats, pageMode]);
 
   const filteredSeats = React.useMemo(() => {
     if (filter === "all") return seats;
@@ -108,16 +118,28 @@ export default function CheckGenderPage() {
     if (filter !== "all" && seat.category_id !== filter) return;
 
     // If scan QR mode is enabled and seat is not yet checked, open modal
-    if (withScanQr && scanQrUrl && !seat.is_checked && !seat.participant_id) {
+    if (
+      withScanQr &&
+      scanQrUrl &&
+      !seat.is_checked &&
+      !seat.participant_id &&
+      pageMode === "check"
+    ) {
       setQrModalSeatId(seatId);
       return;
     }
 
-    if (seat.is_checked && !removeSeatMode) {
-      return;
+    if (pageMode === "check") {
+      if (seat.is_checked && !removeSeatMode) {
+        return;
+      }
+    } else {
+      if (seat.is_goodie_bag && !removeSeatMode) {
+        return;
+      }
     }
 
-    if (seat.participant_id && !removeSeatMode) {
+    if (seat.participant_id && !removeSeatMode && pageMode === "check") {
       return;
     }
 
@@ -134,6 +156,8 @@ export default function CheckGenderPage() {
               participant_id: null,
               is_checked: false,
               checked_at: null,
+              is_goodie_bag: false,
+              goodie_bag_at: null,
             })
             .eq("id", seatId);
           const { error: participantError } = await supabase
@@ -148,6 +172,8 @@ export default function CheckGenderPage() {
               participant_id: null,
               is_checked: false,
               checked_at: null,
+              is_goodie_bag: false,
+              goodie_bag_at: null,
               participants: null,
             });
           } else {
@@ -177,20 +203,32 @@ export default function CheckGenderPage() {
       }
     }
 
-    // Normal toggle for EMPTY seats doesn't make sense, but if previously it toggled:
-    const next = !seat.is_checked;
-    useSeatStore.getState().updateSeatLocal(seatId, gender, {
-      is_checked: next,
-      checked_at: next ? new Date().toISOString() : null,
-    });
-    try {
-      await persistCheck(gender, seatId, next);
-    } catch {
-      toast.error("Gagal update kursi");
-      useSeatStore.getState().updateSeatLocal(seatId, gender, {
-        is_checked: !next,
-        checked_at: null, // this will be properly reverted
-      });
+    // Normal toggle logic
+    if (pageMode === "check") {
+      const next = !seat.is_checked;
+      try {
+        await persistCheck(gender, seatId, next);
+      } catch {
+        toast.error("Gagal update kursi");
+        useSeatStore.getState().updateSeatLocal(seatId, gender, {
+          is_checked: !next,
+          checked_at: null,
+        });
+      }
+    } else {
+      const next = !seat.is_goodie_bag;
+      try {
+        await persistGoodieBag(gender, seatId, next);
+        toast.success(
+          next ? "Goodie Bag diberikan" : "Goodie Bag batal diberikan",
+        );
+      } catch {
+        toast.error("Gagal update Goodie Bag");
+        useSeatStore.getState().updateSeatLocal(seatId, gender, {
+          is_goodie_bag: !next,
+          goodie_bag_at: null,
+        });
+      }
     }
   };
 
@@ -257,11 +295,40 @@ export default function CheckGenderPage() {
 
       <div>
         <h1 className="font-display text-xl font-bold">
-          Centang — {layout.label}
+          {pageMode === "check" ? "Centang" : "Goodie Bag"} — {layout.label}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Tap kursi untuk hadir / batal hadir.
+          {pageMode === "check"
+            ? "Tap kursi untuk hadir / batal hadir."
+            : "Tap kursi untuk beri goodie bag."}
         </p>
+      </div>
+
+      <div className="flex bg-muted/30 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setPageMode("check")}
+          className={cn(
+            "px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2",
+            pageMode === "check"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <CheckCircle2Icon className="size-3.5" />
+          Check In
+        </button>
+        <button
+          onClick={() => setPageMode("goodie_bag")}
+          className={cn(
+            "px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2",
+            pageMode === "goodie_bag"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <GiftIcon className="size-3.5" />
+          Goodie Bag
+        </button>
       </div>
 
       <motion.div
@@ -275,7 +342,7 @@ export default function CheckGenderPage() {
               {stats.checked}{" "}
               <span className="text-muted-foreground">/ {stats.total}</span>
             </p>
-            <p className="text-xs text-muted-foreground">Tercentang</p>
+            <p className="text-xs text-muted-foreground">{stats.label}</p>
           </div>
           <span className="text-3xl font-bold tabular-nums text-primary">
             {stats.pct}%
@@ -331,7 +398,7 @@ export default function CheckGenderPage() {
         seats={filteredSeats}
         layout={layout}
         categories={categories}
-        mode="check"
+        mode={pageMode}
         onSeatAction={handleSeat}
       />
 

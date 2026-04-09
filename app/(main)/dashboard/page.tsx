@@ -34,18 +34,25 @@ import { cn } from "@/lib/utils"
 
 function statsForGender(
   gender: "male" | "female",
-  seats: Record<string, import("@/types/db").SeatRow>
+  seats: Record<string, import("@/types/db").SeatRow>,
 ) {
-  const list = Object.values(seats)
-  const active = list.filter((s) => !s.is_empty)
-  const checked = active.filter((s) => s.is_checked)
-  const pct =
-    active.length > 0 ? Math.round((checked.length / active.length) * 100) : 0
+  const list = Object.values(seats);
+  const active = list.filter((s) => !s.is_empty);
+  const checked = active.filter((s) => s.is_checked);
+  const goodieBag = active.filter((s) => s.is_goodie_bag);
+  const checkPct =
+    active.length > 0 ? Math.round((checked.length / active.length) * 100) : 0;
+  const goodiePct =
+    active.length > 0
+      ? Math.round((goodieBag.length / active.length) * 100)
+      : 0;
   return {
     total: active.length,
     checked: checked.length,
-    pct,
-  }
+    goodieBag: goodieBag.length,
+    checkPct,
+    goodiePct,
+  };
 }
 
 export default function DashboardPage() {
@@ -186,13 +193,35 @@ export default function DashboardPage() {
           <Card className="overflow-hidden border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-transparent">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">Pria</CardTitle>
-              <CardDescription>
-                {maleStats.checked} / {maleStats.total} hadir
-              </CardDescription>
+              <div className="flex flex-col gap-1 mt-1">
+                <CardDescription className="text-xs">
+                  {maleStats.checked} / {maleStats.total} hadir ({maleStats.checkPct}%)
+                </CardDescription>
+                <CardDescription className="text-xs">
+                  {maleStats.goodieBag} / {maleStats.total} goodie bag ({maleStats.goodiePct}%)
+                </CardDescription>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Progress value={maleStats.pct} className="h-2" />
-              <p className="text-2xl font-bold tabular-nums">{maleStats.pct}%</p>
+            <CardContent className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span>Kehadiran</span>
+                  <span>{maleStats.checkPct}%</span>
+                </div>
+                <Progress value={maleStats.checkPct} className="h-2" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span>Goodie Bag</span>
+                  <span>{maleStats.goodiePct}%</span>
+                </div>
+                <Progress value={maleStats.goodiePct} className="h-2 bg-purple-500/20">
+                  <div 
+                    className="h-full bg-purple-500 transition-all" 
+                    style={{ width: `${maleStats.goodiePct}%` }}
+                  />
+                </Progress>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -205,13 +234,35 @@ export default function DashboardPage() {
           <Card className="overflow-hidden border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-transparent">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">Wanita</CardTitle>
-              <CardDescription>
-                {femaleStats.checked} / {femaleStats.total} hadir
-              </CardDescription>
+              <div className="flex flex-col gap-1 mt-1">
+                <CardDescription className="text-xs">
+                  {femaleStats.checked} / {femaleStats.total} hadir ({femaleStats.checkPct}%)
+                </CardDescription>
+                <CardDescription className="text-xs">
+                  {femaleStats.goodieBag} / {femaleStats.total} goodie bag ({femaleStats.goodiePct}%)
+                </CardDescription>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Progress value={femaleStats.pct} className="h-2" />
-              <p className="text-2xl font-bold tabular-nums">{femaleStats.pct}%</p>
+            <CardContent className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span>Kehadiran</span>
+                  <span>{femaleStats.checkPct}%</span>
+                </div>
+                <Progress value={femaleStats.checkPct} className="h-2" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span>Goodie Bag</span>
+                  <span>{femaleStats.goodiePct}%</span>
+                </div>
+                <Progress value={femaleStats.goodiePct} className="h-2 bg-purple-500/20">
+                  <div 
+                    className="h-full bg-purple-500 transition-all" 
+                    style={{ width: `${femaleStats.goodiePct}%` }}
+                  />
+                </Progress>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

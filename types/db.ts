@@ -40,6 +40,8 @@ export interface SeatRow {
   is_empty: boolean
   is_checked: boolean
   checked_at: string | null
+  is_goodie_bag: boolean
+  goodie_bag_at: string | null
   updated_at: string
   participants?: Partial<ParticipantRow> | null
 }

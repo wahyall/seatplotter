@@ -20,17 +20,28 @@ import { MarsIcon, VenusIcon } from "lucide-react"
 
 function useStats(gender: "male" | "female") {
   const seats = useSeatStore(
-    useShallow((s) => Object.values(s.seats[gender] ?? {}))
-  )
+    useShallow((s) => Object.values(s.seats[gender] ?? {})),
+  );
   return React.useMemo(() => {
-    const active = seats.filter((s) => !s.is_empty)
-    const checked = active.filter((s) => s.is_checked)
-    const pct =
+    const active = seats.filter((s) => !s.is_empty);
+    const checked = active.filter((s) => s.is_checked);
+    const goodieBag = active.filter((s) => s.is_goodie_bag);
+    const checkPct =
       active.length > 0
         ? Math.round((checked.length / active.length) * 100)
-        : 0
-    return { total: active.length, checked: checked.length, pct }
-  }, [seats])
+        : 0;
+    const goodiePct =
+      active.length > 0
+        ? Math.round((goodieBag.length / active.length) * 100)
+        : 0;
+    return {
+      total: active.length,
+      checked: checked.length,
+      goodieBag: goodieBag.length,
+      checkPct,
+      goodiePct,
+    };
+  }, [seats]);
 }
 
 export default function CheckLandingPage() {
@@ -64,12 +75,33 @@ export default function CheckLandingPage() {
                   <MarsIcon className="size-6 text-blue-400" />
                   Pria
                 </CardTitle>
-                <CardDescription>
-                  {maleStats.checked} / {maleStats.total} tercentang
+                <CardDescription className="text-xs">
+                  Hadir: {maleStats.checked} / {maleStats.total}
+                </CardDescription>
+                <CardDescription className="text-xs">
+                  Goodie: {maleStats.goodieBag} / {maleStats.total}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Progress value={maleStats.pct} className="h-2" />
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground">
+                    <span>Hadir</span>
+                    <span>{maleStats.checkPct}%</span>
+                  </div>
+                  <Progress value={maleStats.checkPct} className="h-1.5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground">
+                    <span>Goodie Bag</span>
+                    <span>{maleStats.goodiePct}%</span>
+                  </div>
+                  <Progress value={maleStats.goodiePct} className="h-1.5 bg-purple-500/20">
+                    <div 
+                      className="h-full bg-purple-500 transition-all" 
+                      style={{ width: `${maleStats.goodiePct}%` }}
+                    />
+                  </Progress>
+                </div>
               </CardContent>
             </Card>
           </Link>
@@ -87,12 +119,33 @@ export default function CheckLandingPage() {
                   <VenusIcon className="size-6 text-pink-400" />
                   Wanita
                 </CardTitle>
-                <CardDescription>
-                  {femaleStats.checked} / {femaleStats.total} tercentang
+                <CardDescription className="text-xs">
+                  Hadir: {femaleStats.checked} / {femaleStats.total}
+                </CardDescription>
+                <CardDescription className="text-xs">
+                  Goodie: {femaleStats.goodieBag} / {femaleStats.total}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Progress value={femaleStats.pct} className="h-2" />
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground">
+                    <span>Hadir</span>
+                    <span>{femaleStats.checkPct}%</span>
+                  </div>
+                  <Progress value={femaleStats.checkPct} className="h-1.5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground">
+                    <span>Goodie Bag</span>
+                    <span>{femaleStats.goodiePct}%</span>
+                  </div>
+                  <Progress value={femaleStats.goodiePct} className="h-1.5 bg-purple-500/20">
+                    <div 
+                      className="h-full bg-purple-500 transition-all" 
+                      style={{ width: `${femaleStats.goodiePct}%` }}
+                    />
+                  </Progress>
+                </div>
               </CardContent>
             </Card>
           </Link>

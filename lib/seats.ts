@@ -74,3 +74,15 @@ export async function checkSeat(id: string, isChecked: boolean): Promise<void> {
     .eq("id", id)
   if (error) throw error
 }
+
+export async function checkGoodieBag(id: string, isGoodieBag: boolean): Promise<void> {
+  const { error } = await supabase
+    .from("seats")
+    .update({
+      is_goodie_bag: isGoodieBag,
+      goodie_bag_at: isGoodieBag ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+  if (error) throw error
+}

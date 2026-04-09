@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { CheckIcon, UserIcon } from "lucide-react"
+import { CheckIcon, UserIcon, GiftIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { CategoryRow, SeatRow, SeatWithDim } from "@/types/db"
 import { useSeatStore } from "@/store/useSeatStore"
 
-export type SeatMode = "editor" | "view" | "check" | "booking"
+export type SeatMode = "editor" | "view" | "check" | "booking" | "goodie_bag"
 
 export type SeatBookingState = {
   /** Seat is booked by someone (has participant_id) */
@@ -108,12 +108,13 @@ function SeatCellInner({
   const dim = seat._dimmed ? "opacity-[0.2]" : ""
   const isBookingMode = mode === "booking"
   const isCheckMode = mode === "check"
+  const isGoodieBagMode = mode === "goodie_bag"
   
   const booked = isBookingMode && seat._booked
   const mine = isBookingMode && seat._mine
 
   const checkedStyle =
-    isCheckMode && seat.is_checked ? "opacity-[0.4]" : ""
+    (isCheckMode && seat.is_checked) || (isGoodieBagMode && seat.is_goodie_bag) ? "opacity-[0.4]" : ""
 
   return (
     <button
@@ -173,15 +174,20 @@ function SeatCellInner({
           </span>
         </span>
       )}
-      {/* Check mode overrides: booked (selected) or checked-in */}
-      {isCheckMode && seat.participant_id && !seat.is_checked && (
+      {/* Check/GoodieBag mode overrides: booked (selected) or checked-in */}
+      {(isCheckMode || isGoodieBagMode) && seat.participant_id && !seat.is_checked && !seat.is_goodie_bag && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50">
           <UserIcon className="size-3.5 text-white/90 drop-shadow-sm" strokeWidth={2.5} />
         </span>
       )}
-      {seat.is_checked && !isBookingMode && mode !== "editor" && (
+      {seat.is_checked && !isBookingMode && mode !== "editor" && !isGoodieBagMode && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 ring-2 ring-emerald-400 saturate-50">
           <CheckIcon className="size-5 text-white/90 drop-shadow-lg" strokeWidth={3} />
+        </span>
+      )}
+      {seat.is_goodie_bag && isGoodieBagMode && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 ring-2 ring-purple-400 saturate-50">
+          <GiftIcon className="size-5 text-white/90 drop-shadow-lg" strokeWidth={3} />
         </span>
       )}
     </button>
@@ -193,6 +199,7 @@ export const SeatCell = React.memo(SeatCellInner, areEqual)
 function areEqual(prev: SeatCellProps, next: SeatCellProps) {
   return (
     prev.seat.is_checked === next.seat.is_checked &&
+    prev.seat.is_goodie_bag === next.seat.is_goodie_bag &&
     prev.seat.category_id === next.seat.category_id &&
     prev.seat.participant_id === next.seat.participant_id &&
     prev.seat.is_empty === next.seat.is_empty &&

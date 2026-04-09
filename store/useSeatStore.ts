@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import type { Gender, SeatRow } from "@/types/db"
-import { bulkAssignCategory, checkSeat, updateSeat } from "@/lib/seats"
+import { bulkAssignCategory, checkSeat, checkGoodieBag, updateSeat } from "@/lib/seats"
 import { useLayoutStore } from "@/store/useLayoutStore"
 
 export type SeatPatch = Partial<
@@ -244,4 +244,17 @@ export async function persistCheck(
     checked_at: isChecked ? new Date().toISOString() : null,
   })
   await checkSeat(seatId, isChecked)
+}
+
+export async function persistGoodieBag(
+  gender: Gender,
+  seatId: string,
+  isGoodieBag: boolean
+) {
+  const st = useSeatStore.getState()
+  st.updateSeatLocal(seatId, gender, {
+    is_goodie_bag: isGoodieBag,
+    goodie_bag_at: isGoodieBag ? new Date().toISOString() : null,
+  })
+  await checkGoodieBag(seatId, isGoodieBag)
 }
