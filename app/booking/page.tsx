@@ -66,7 +66,7 @@ export default function BookingPage() {
   const fileRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
-    const stored = sessionStorage.getItem("booking_tickets")
+    const stored = localStorage.getItem("booking_tickets")
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as ValidatedTicket[]
@@ -315,7 +315,7 @@ export default function BookingPage() {
 
       const merged = [...updatedExisting, ...brandNew]
       setTickets(merged)
-      sessionStorage.setItem("booking_tickets", JSON.stringify(merged))
+      localStorage.setItem("booking_tickets", JSON.stringify(merged))
       setShowScanner(false)
 
       if (newResults.length > 0) {
@@ -534,7 +534,7 @@ export default function BookingPage() {
                         }
 
                         setTickets(newMerged)
-                        sessionStorage.setItem("booking_tickets", JSON.stringify(newMerged))
+                        localStorage.setItem("booking_tickets", JSON.stringify(newMerged))
                         setSelectedTicketId(null)
                         setBooking(false)
 

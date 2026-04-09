@@ -218,7 +218,13 @@ export async function extractQrFromPdf(
         results.push({ value: code, page: i })
       }
     }
+
+    // Release page-level resources (operator lists, image caches, etc.)
+    page.cleanup()
   }
+
+  // Release the entire PDF document from memory
+  pdf.destroy()
 
   onProgress?.({ current: totalPages, total: totalPages, found: results.length })
   return results
