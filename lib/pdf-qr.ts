@@ -8,6 +8,9 @@
  */
 import jsQR from "jsqr"
 
+/** Yield control back to the browser so UI can repaint & stay responsive. */
+const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0))
+
 const PDFJS_CDN =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs"
 const PDFJS_WORKER_CDN =
@@ -129,14 +132,15 @@ async function extractTextCandidates(page: any): Promise<string[]> {
 
 /**
  * Run sliding-window QR scan on a canvas context.
+ * Yields to the main thread between passes so the UI stays responsive.
  */
-function slidingWindowScan(
+async function slidingWindowScan(
   ctx: CanvasRenderingContext2D,
   canvasW: number,
   canvasH: number,
   seen: Set<string>,
   pageNum: number
-): QrScanResult[] {
+): Promise<QrScanResult[]> {
   const results: QrScanResult[] = []
 
   const fractionalPasses = [
@@ -168,6 +172,9 @@ function slidingWindowScan(
         }
       }
     }
+
+    // Yield to main thread between passes so UI can repaint
+    await yieldToMain()
   }
 
   return results
@@ -200,11 +207,14 @@ export async function extractQrFromPdf(
     await page.render({ canvasContext: ctx, viewport }).promise
 
     // Scan original canvas
-    results.push(...slidingWindowScan(ctx, canvas.width, canvas.height, seen, i))
+    results.push(...await slidingWindowScan(ctx, canvas.width, canvas.height, seen, i))
+
+    // Yield before binarization (CPU-heavy)
+    await yieldToMain()
 
     // Scan binarized canvas
     const binCtx = binarizeCanvas(ctx, canvas.width, canvas.height)
-    results.push(...slidingWindowScan(binCtx, canvas.width, canvas.height, seen, i))
+    results.push(...await slidingWindowScan(binCtx, canvas.width, canvas.height, seen, i))
 
     // Cleanup canvases
     canvas.width = 0; canvas.height = 0
