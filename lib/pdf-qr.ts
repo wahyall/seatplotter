@@ -100,6 +100,10 @@ export async function extractQrFromPdf(
       { size: 1 / 3, step: 1 / 6 }, // 5x5 = 25 windows
       { size: 1 / 4, step: 1 / 8 }, // 7x7 = 49 windows
       { size: 1 / 5, step: 1 / 10 },// 9x9 = 81 windows
+      { size: 1 / 6, step: 1 / 12 },// 11x11 = 121 windows
+      { size: 1 / 8, step: 1 / 16 },// 15x15 = 225 windows
+      { size: 1 / 10, step: 1 / 20 },// 19x19 = 361 windows
+      { size: 1 / 12, step: 1 / 24 },// 23x23 = 529 windows
     ]
 
     for (const { size, step } of fractionalPasses) {
@@ -108,21 +112,21 @@ export async function extractQrFromPdf(
       const stepX = Math.floor(canvas.width * step)
       const stepY = Math.floor(canvas.height * step)
 
-      for (let y = 0; y + h <= canvas.height || y === 0; y += stepY) {
-        for (let x = 0; x + w <= canvas.width || x === 0; x += stepX) {
+      for (let y = 0; y < canvas.height; y += stepY) {
+        for (let x = 0; x < canvas.width; x += stepX) {
           // ensure we don't go out of bounds on the last step
           const currentW = Math.min(w, canvas.width - x)
           const currentH = Math.min(h, canvas.height - y)
+
+          // if the window is too small, jsQR won't find anything and it's a waste of time
+          if (currentW < 40 || currentH < 40) continue
 
           const value = scanRegion(ctx, x, y, currentW, currentH)
           if (value && !seen.has(value)) {
             seen.add(value)
             results.push({ value, page: i })
           }
-
-          if (x + w >= canvas.width) break
         }
-        if (y + h >= canvas.height) break
       }
     }
 
