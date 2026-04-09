@@ -263,3 +263,40 @@ export async function extractQrFromMultiplePdfs(
 
   return allResults
 }
+
+/**
+ * Generate a base64 image preview of the first page of a PDF file.
+ * This is widely compatible with mobile browsers, unlike PDF iframes.
+ */
+export async function generatePdfPreview(file: File): Promise<string> {
+  const pdfjs = await loadPdfJs()
+  const arrayBuffer = await file.arrayBuffer()
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
+  
+  try {
+    const page = await pdf.getPage(1)
+    const viewport = page.getViewport({ scale: 1.5 })
+    
+    const canvas = document.createElement("canvas")
+    canvas.width = viewport.width
+    canvas.height = viewport.height
+    const ctx = canvas.getContext("2d")!
+    
+    // Fill white background just in case
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    
+    await page.render({ canvasContext: ctx, viewport }).promise
+    
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.8)
+    
+    // Cleanup
+    page.cleanup()
+    canvas.width = 0
+    canvas.height = 0
+    
+    return dataUrl
+  } finally {
+    pdf.destroy()
+  }
+}

@@ -11,7 +11,7 @@ import { useShallow } from "zustand/react/shallow"
 import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats"
 import { useSeatPresence } from "@/lib/hooks/useSeatPresence"
 import { bookSeat, validateTickets, type ValidatedTicket } from "@/lib/booking"
-import { extractQrFromMultiplePdfs, type ScanProgress } from "@/lib/pdf-qr"
+import { extractQrFromMultiplePdfs, generatePdfPreview, type ScanProgress } from "@/lib/pdf-qr"
 import { ConnectionBanner } from "@/components/layout/connection-banner"
 import { StageBar } from "@/components/layout/stage-bar"
 import { SeatGrid } from "@/components/seat/seat-grid"
@@ -63,7 +63,16 @@ export default function BookingPage() {
   const [showScanner, setShowScanner] = React.useState(false)
   const [scanning, setScanning] = React.useState(false)
   const [scanProgress, setScanProgress] = React.useState<ScanProgress | null>(null)
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
   const fileRef = React.useRef<HTMLInputElement>(null)
+
+  // We no longer use object URLs, so we don't need the URL.revokeObjectURL cleanup, 
+  // but it's safe to keep the state reset.
+  React.useEffect(() => {
+    if (!showScanner && previewUrl) {
+      setPreviewUrl(null)
+    }
+  }, [showScanner, previewUrl])
 
   React.useEffect(() => {
     const stored = localStorage.getItem("booking_tickets")
@@ -274,6 +283,11 @@ export default function BookingPage() {
     setScanProgress(null)
 
     try {
+      // Generate standard image preview for mobile compatibility 
+      // (mobile Chrome doesn't display PDF iframes)
+      const previewDataUrl = await generatePdfPreview(files[0])
+      setPreviewUrl(previewDataUrl)
+      
       const alreadyKnown = new Set(tickets.map((t) => t.kode_tiket))
       const results = await extractQrFromMultiplePdfs(
         files,
@@ -328,6 +342,7 @@ export default function BookingPage() {
     } finally {
       setScanning(false)
       if (fileRef.current) fileRef.current.value = ""
+      // Kept previewUrl until modal closes so they can still see it if they want
     }
   }
 
@@ -619,7 +634,7 @@ export default function BookingPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md rounded-2xl border border-border/60 bg-card p-6 shadow-xl"
+              className="w-full max-w-2xl rounded-2xl border border-border/60 bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto"
             >
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 font-display text-lg font-bold">
@@ -676,6 +691,16 @@ export default function BookingPage() {
                   onChange={handleScanFile}
                 />
               </label>
+
+              {previewUrl && (
+                <div className="mt-4 overflow-hidden rounded-xl border border-border/60 bg-muted/20 flex items-center justify-center">
+                  <img 
+                    src={previewUrl} 
+                    className="max-h-[50vh] w-auto max-w-full object-contain drop-shadow-sm rounded" 
+                    alt="PDF Preview"
+                  />
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
