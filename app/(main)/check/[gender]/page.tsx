@@ -8,7 +8,11 @@ import type { Gender } from "@/types/db";
 import { useLayoutStore } from "@/store/useLayoutStore";
 import { useShallow } from "zustand/react/shallow";
 import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats";
-import { persistCheck, persistGoodieBag, useSeatStore } from "@/store/useSeatStore";
+import {
+  persistCheck,
+  persistGoodieBag,
+  useSeatStore,
+} from "@/store/useSeatStore";
 import { ConnectionBanner } from "@/components/layout/connection-banner";
 import { StageBar } from "@/components/layout/stage-bar";
 import { SeatGrid } from "@/components/seat/seat-grid";
@@ -50,7 +54,9 @@ export default function CheckGenderPage() {
   const [qrModalSeatId, setQrModalSeatId] = React.useState<string | null>(null);
 
   const [removeSeatMode, setRemoveSeatMode] = React.useState(false);
-  const [pageMode, setPageMode] = React.useState<"check" | "goodie_bag">("check");
+  const [pageMode, setPageMode] = React.useState<"check" | "goodie_bag">(
+    "check",
+  );
   const [participantInfoSeatId, setParticipantInfoSeatId] = React.useState<
     string | null
   >(null);
@@ -360,7 +366,7 @@ export default function CheckGenderPage() {
         />
       </div>
 
-      {scanQrUrl && (
+      {scanQrUrl && pageMode === "check" && (
         <div className="flex items-center gap-2">
           <Checkbox
             id="with-scan-qr"
