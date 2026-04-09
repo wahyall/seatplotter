@@ -54,10 +54,78 @@ function scanRegion(
 }
 
 /**
+ * Create a binarized (pure black & white) copy of a canvas.
+ * This dramatically improves jsQR detection by removing grey text,
+ * gradients, and other noise that confuses the QR detector.
+ */
+function binarizeCanvas(
+  srcCtx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): CanvasRenderingContext2D {
+  const srcData = srcCtx.getImageData(0, 0, width, height)
+  const pixels = srcData.data
+
+  // Otsu's threshold: compute optimal threshold from histogram
+  const histogram = new Array<number>(256).fill(0)
+  for (let i = 0; i < pixels.length; i += 4) {
+    const gray = Math.round(
+      pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114
+    )
+    histogram[gray]++
+  }
+
+  const totalPixels = width * height
+  let sum = 0
+  for (let i = 0; i < 256; i++) sum += i * histogram[i]
+
+  let sumB = 0
+  let wB = 0
+  let maxVariance = 0
+  let threshold = 128
+
+  for (let t = 0; t < 256; t++) {
+    wB += histogram[t]
+    if (wB === 0) continue
+    const wF = totalPixels - wB
+    if (wF === 0) break
+
+    sumB += t * histogram[t]
+    const mB = sumB / wB
+    const mF = (sum - sumB) / wF
+    const variance = wB * wF * (mB - mF) * (mB - mF)
+
+    if (variance > maxVariance) {
+      maxVariance = variance
+      threshold = t
+    }
+  }
+
+  // Apply threshold
+  for (let i = 0; i < pixels.length; i += 4) {
+    const gray =
+      pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114
+    const val = gray < threshold ? 0 : 255
+    pixels[i] = val
+    pixels[i + 1] = val
+    pixels[i + 2] = val
+    // alpha stays 255
+  }
+
+  const binCanvas = document.createElement("canvas")
+  binCanvas.width = width
+  binCanvas.height = height
+  const binCtx = binCanvas.getContext("2d")!
+  binCtx.putImageData(srcData, 0, 0)
+  return binCtx
+}
+
+/**
  * Extract QR codes from a PDF file.
  * Renders each page to an offscreen canvas, then scans for QR codes using
- * progressive grid subdivision (1×1 → 2×2 → 3×3 → 4×4) so multiple QR
- * codes on a single page are detected.
+ * progressive grid subdivision with overlapping windows. Both the original
+ * and a binarized (black & white) version of each page are scanned for
+ * maximum reliability.
  *
  * @param file          PDF file to scan
  * @param onProgress    Optional progress callback
@@ -67,7 +135,7 @@ function scanRegion(
 export async function extractQrFromPdf(
   file: File,
   onProgress?: (p: ScanProgress) => void,
-  scale = 2,
+  scale = 3,
   alreadySeen?: Set<string>
 ): Promise<QrScanResult[]> {
   const pdfjs = await loadPdfJs()
@@ -91,40 +159,45 @@ export async function extractQrFromPdf(
 
     await page.render({ canvasContext: ctx, viewport }).promise
 
-    // Sliding window scanning guarantees we don't miss closely packed QR codes that sit on tile boundaries.
+    // Create a binarized copy for better QR detection through noise
+    const binCtx = binarizeCanvas(ctx, canvas.width, canvas.height)
+
+    // Sliding window scanning guarantees we don't miss closely packed QR codes
+    // that sit on tile boundaries.
     // size: width/height fraction of the page
-    // step: how much to move the window each time (overlap)
+    // step: how much to move the window each time (overlap = 50%)
     const fractionalPasses = [
-      { size: 1, step: 1 },         // 1x1 = 1 window
-      { size: 1 / 2, step: 1 / 4 }, // 3x3 = 9 windows
-      { size: 1 / 3, step: 1 / 6 }, // 5x5 = 25 windows
-      { size: 1 / 4, step: 1 / 8 }, // 7x7 = 49 windows
-      { size: 1 / 5, step: 1 / 10 },// 9x9 = 81 windows
-      { size: 1 / 6, step: 1 / 12 },// 11x11 = 121 windows
-      { size: 1 / 8, step: 1 / 16 },// 15x15 = 225 windows
-      { size: 1 / 10, step: 1 / 20 },// 19x19 = 361 windows
-      { size: 1 / 12, step: 1 / 24 },// 23x23 = 529 windows
+      { size: 1, step: 1 },          // full page
+      { size: 1 / 2, step: 1 / 4 },
+      { size: 1 / 3, step: 1 / 6 },
+      { size: 1 / 4, step: 1 / 8 },
+      { size: 1 / 5, step: 1 / 10 },
+      { size: 1 / 6, step: 1 / 12 },
+      { size: 1 / 8, step: 1 / 16 },
     ]
 
-    for (const { size, step } of fractionalPasses) {
-      const w = Math.floor(canvas.width * size)
-      const h = Math.floor(canvas.height * size)
-      const stepX = Math.floor(canvas.width * step)
-      const stepY = Math.floor(canvas.height * step)
+    // Scan both original and binarized contexts
+    const contexts = [ctx, binCtx]
 
-      for (let y = 0; y < canvas.height; y += stepY) {
-        for (let x = 0; x < canvas.width; x += stepX) {
-          // ensure we don't go out of bounds on the last step
-          const currentW = Math.min(w, canvas.width - x)
-          const currentH = Math.min(h, canvas.height - y)
+    for (const scanCtx of contexts) {
+      for (const { size, step } of fractionalPasses) {
+        const w = Math.floor(canvas.width * size)
+        const h = Math.floor(canvas.height * size)
+        const stepX = Math.max(1, Math.floor(canvas.width * step))
+        const stepY = Math.max(1, Math.floor(canvas.height * step))
 
-          // if the window is too small, jsQR won't find anything and it's a waste of time
-          if (currentW < 40 || currentH < 40) continue
+        for (let y = 0; y < canvas.height; y += stepY) {
+          for (let x = 0; x < canvas.width; x += stepX) {
+            const currentW = Math.min(w, canvas.width - x)
+            const currentH = Math.min(h, canvas.height - y)
 
-          const value = scanRegion(ctx, x, y, currentW, currentH)
-          if (value && !seen.has(value)) {
-            seen.add(value)
-            results.push({ value, page: i })
+            if (currentW < 40 || currentH < 40) continue
+
+            const value = scanRegion(scanCtx, x, y, currentW, currentH)
+            if (value && !seen.has(value)) {
+              seen.add(value)
+              results.push({ value, page: i })
+            }
           }
         }
       }
@@ -133,6 +206,10 @@ export async function extractQrFromPdf(
     // Cleanup
     canvas.width = 0
     canvas.height = 0
+    // cleanup binarized canvas
+    const binCanvas = binCtx.canvas
+    binCanvas.width = 0
+    binCanvas.height = 0
   }
 
   onProgress?.({
@@ -150,7 +227,7 @@ export async function extractQrFromPdf(
 export async function extractQrFromMultiplePdfs(
   files: File[],
   onProgress?: (p: ScanProgress & { fileIndex: number; totalFiles: number }) => void,
-  scale = 2
+  scale = 3
 ): Promise<QrScanResult[]> {
   const allResults: QrScanResult[] = []
   const globalSeen = new Set<string>()

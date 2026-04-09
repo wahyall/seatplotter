@@ -277,8 +277,7 @@ export default function BookingPage() {
       const alreadyKnown = new Set(tickets.map((t) => t.kode_tiket))
       const results = await extractQrFromMultiplePdfs(
         files,
-        (p) => setScanProgress(p),
-        2
+        (p) => setScanProgress(p)
       )
 
       const newResults = results.filter((r) => !alreadyKnown.has(r.value))
