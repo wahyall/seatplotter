@@ -180,7 +180,7 @@ function SeatCellInner({
           <UserIcon className="size-3.5 text-white/90 drop-shadow-sm" strokeWidth={2.5} />
         </span>
       )}
-      {seat.is_checked && !isBookingMode && mode !== "editor" && !isGoodieBagMode && (
+      {seat.is_checked && !seat.participant_id && !isBookingMode && mode !== "editor" && !isGoodieBagMode && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 ring-2 ring-emerald-400 saturate-50">
           <CheckIcon className="size-5 text-white/90 drop-shadow-lg" strokeWidth={3} />
         </span>

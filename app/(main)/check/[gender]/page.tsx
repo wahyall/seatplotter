@@ -136,7 +136,7 @@ export default function CheckGenderPage() {
     }
 
     if (pageMode === "check") {
-      if (seat.is_checked && !removeSeatMode) {
+      if (seat.is_checked && !removeSeatMode && !seat.participant_id) {
         return;
       }
     } else {
