@@ -175,7 +175,7 @@ function SeatCellInner({
         </span>
       )}
       {/* Check/GoodieBag mode overrides: booked (selected) or checked-in */}
-      {(isCheckMode || isGoodieBagMode) && seat.participant_id && !seat.is_checked && !seat.is_goodie_bag && (
+      {(isCheckMode || isGoodieBagMode) && seat.participant_id && !seat.is_goodie_bag && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50">
           <UserIcon className="size-3.5 text-white/90 drop-shadow-sm" strokeWidth={2.5} />
         </span>
