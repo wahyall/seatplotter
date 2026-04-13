@@ -101,10 +101,16 @@ function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <div className="bg-red-500 text-white font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
-        {seatLabel.replace("_", " ")}
+      <div className="bg-red-500 text-white font-black text-4xl px-4 pb-1 pt-6 rounded-xl relative overflow-hidden">
+        <img
+          src="/ticket.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute top-0 left-0 w-full h-full object-contain opacity-90 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)] z-20"
+        />
+        <span className="relative z-20">{seatLabel.replace("_", " ")}</span>
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 w-full h-full pointer-events-none z-0"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
         >
@@ -127,7 +133,7 @@ function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
         <svg
           viewBox="0 0 120 56"
           preserveAspectRatio="xMidYMid slice"
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 w-full h-full pointer-events-none z-0"
           xmlns="http://www.w3.org/2000/svg"
           style={{ overflow: "hidden" }}
         >
@@ -241,8 +247,14 @@ export function TicketPrint({ ticket, seatLabel, config, authHash }: TicketPrint
               {authHash ? (
                 <SeatGuard hash={authHash} seatLabel={seatLabel} />
               ) : (
-                <div className="bg-red-500 text-white font-black text-4xl px-4 py-1 rounded-xl">
-                  {seatLabel.replace('_', ' ')}
+                <div className="bg-red-500 text-white font-black text-4xl px-4 pb-1 pt-6 rounded-xl relative overflow-hidden">
+                  <img
+                    src="/ticket.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-8 object-contain opacity-90 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)]"
+                  />
+                  <span className="relative z-10">{seatLabel.replace("_", " ")}</span>
                 </div>
               )}
             </div>
