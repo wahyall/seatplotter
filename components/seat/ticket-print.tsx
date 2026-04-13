@@ -106,7 +106,7 @@ function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
           src="/ticket.png"
           alt=""
           aria-hidden="true"
-          className="absolute top-0 left-0 w-full h-full object-cover opacity-20 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)] z-20"
+          className="absolute top-0 left-0 w-full h-full object-cover opacity-10 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)] z-20"
         />
         <span className="relative z-10">{seatLabel.replace("_", " ")}</span>
         <svg
@@ -252,7 +252,7 @@ export function TicketPrint({ ticket, seatLabel, config, authHash }: TicketPrint
                     src="/ticket.png"
                     alt=""
                     aria-hidden="true"
-                    className="absolute top-0 left-0 w-full h-full object-cover opacity-20 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)] z-20"
+                    className="absolute top-0 left-0 w-full h-full object-cover opacity-10 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)] z-20"
                   />
                   <span className="relative z-10">{seatLabel.replace("_", " ")}</span>
                 </div>
