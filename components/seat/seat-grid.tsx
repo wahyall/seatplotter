@@ -85,12 +85,12 @@ export function SeatGrid({
       <div
         ref={parentRef}
         className={cn(
-          "h-[min(58vh,520px)] overflow-auto rounded-xl border border-border/60 bg-card/30 p-2",
+          "h-[min(58vh,520px)] overflow-auto rounded-md border border-border bg-card p-2",
           isExporting && "h-auto overflow-visible"
         )}
       >
         <div className="min-w-max">
-          <div className="sticky top-0 z-10 -mx-2 mb-1 border-b border-border/40 bg-card/95 px-2 py-1 backdrop-blur-sm supports-backdrop-filter:bg-card/80">
+          <div className="sticky top-0 z-10 -mx-2 mb-1 border-b border-border bg-card px-2 py-1">
             <SeatColHeader headers={headers} compact={compact} />
           </div>
           <div

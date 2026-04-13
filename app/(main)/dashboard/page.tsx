@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import { useLayoutStore } from "@/store/useLayoutStore"
@@ -12,13 +11,6 @@ import { ConnectionBanner } from "@/components/layout/connection-banner"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -78,7 +70,6 @@ export default function DashboardPage() {
     [femaleSeats]
   )
 
-  // Debounced persist to Supabase
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleScanQrUrlChange = React.useCallback(
@@ -107,28 +98,22 @@ export default function DashboardPage() {
   if (!hydrated) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-2/3 max-w-md rounded-xl" />
-        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-10 w-2/3 max-w-md rounded-md" />
+        <Skeleton className="h-20 rounded-md" />
         <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-40 rounded-2xl" />
-          <Skeleton className="h-40 rounded-2xl" />
+          <Skeleton className="h-36 rounded-md" />
+          <Skeleton className="h-36 rounded-md" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className="space-y-6 pb-8">
       <ConnectionBanner isConnected={isConnected} />
 
-      <header className="space-y-2">
-        <div className="flex items-center gap-2 text-primary">
-          <ArmchairIcon className="size-8" />
-          <span className="font-display text-lg font-semibold tracking-tight">
-            SeatPlotter
-          </span>
-        </div>
-        <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+      <header className="space-y-1">
+        <h1 className="font-display text-xl font-bold tracking-tight md:text-2xl">
           {config?.event_name ?? "Event"}
         </h1>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -149,123 +134,50 @@ export default function DashboardPage() {
 
       <div
         className={cn(
-          "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
+          "inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-medium",
           isConnected
-            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-            : "border-amber-500/40 bg-amber-500/10 text-amber-400"
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+            : "border-amber-500/30 bg-amber-500/10 text-amber-400"
         )}
       >
         <RadioIcon
           className={cn("size-3", isConnected && "animate-pulse")}
         />
-        {isConnected ? "Live — sinkron realtime" : "Menyambungkan…"}
+        {isConnected ? "Realtime aktif" : "Menyambungkan\u2026"}
       </div>
 
-      <Card className="overflow-hidden border-border/60">
-        <CardContent className="p-4">
-          <Label
-            htmlFor="scan-qr-url"
-            className="mb-2 inline-flex items-center gap-2 text-sm font-medium"
-          >
-            <QrCodeIcon className="size-4 text-primary" />
-            Scan QR Url
-          </Label>
-          <Input
-            id="scan-qr-url"
-            type="url"
-            placeholder="https://example.com/scan"
-            value={scanQrUrl}
-            onChange={(e) => handleScanQrUrlChange(e.target.value)}
-            className="rounded-lg"
-          />
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            URL yang digunakan untuk iframe scan QR di halaman centang.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-md border border-border bg-card p-4">
+        <Label
+          htmlFor="scan-qr-url"
+          className="mb-2 inline-flex items-center gap-2 text-sm font-medium"
+        >
+          <QrCodeIcon className="size-4 text-primary" />
+          Scan QR Url
+        </Label>
+        <Input
+          id="scan-qr-url"
+          type="url"
+          placeholder="https://example.com/scan"
+          value={scanQrUrl}
+          onChange={(e) => handleScanQrUrlChange(e.target.value)}
+          className="rounded-md"
+        />
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          URL yang digunakan untuk iframe scan QR di halaman centang.
+        </p>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Card className="overflow-hidden border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-transparent">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Pria</CardTitle>
-              <div className="flex flex-col gap-1 mt-1">
-                <CardDescription className="text-xs">
-                  {maleStats.checked} / {maleStats.total} hadir ({maleStats.checkPct}%)
-                </CardDescription>
-                <CardDescription className="text-xs">
-                  {maleStats.goodieBag} / {maleStats.total} goodie bag ({maleStats.goodiePct}%)
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-2">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  <span>Kehadiran</span>
-                  <span>{maleStats.checkPct}%</span>
-                </div>
-                <Progress value={maleStats.checkPct} className="h-2" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  <span>Goodie Bag</span>
-                  <span>{maleStats.goodiePct}%</span>
-                </div>
-                <Progress value={maleStats.goodiePct} className="h-2 bg-purple-500/20">
-                  <div 
-                    className="h-full bg-purple-500 transition-all" 
-                    style={{ width: `${maleStats.goodiePct}%` }}
-                  />
-                </Progress>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.05 }}
-        >
-          <Card className="overflow-hidden border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-transparent">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Wanita</CardTitle>
-              <div className="flex flex-col gap-1 mt-1">
-                <CardDescription className="text-xs">
-                  {femaleStats.checked} / {femaleStats.total} hadir ({femaleStats.checkPct}%)
-                </CardDescription>
-                <CardDescription className="text-xs">
-                  {femaleStats.goodieBag} / {femaleStats.total} goodie bag ({femaleStats.goodiePct}%)
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-2">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  <span>Kehadiran</span>
-                  <span>{femaleStats.checkPct}%</span>
-                </div>
-                <Progress value={femaleStats.checkPct} className="h-2" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  <span>Goodie Bag</span>
-                  <span>{femaleStats.goodiePct}%</span>
-                </div>
-                <Progress value={femaleStats.goodiePct} className="h-2 bg-purple-500/20">
-                  <div 
-                    className="h-full bg-purple-500 transition-all" 
-                    style={{ width: `${femaleStats.goodiePct}%` }}
-                  />
-                </Progress>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <GenderStatsCard
+          label="Pria"
+          color="blue"
+          stats={maleStats}
+        />
+        <GenderStatsCard
+          label="Wanita"
+          color="pink"
+          stats={femaleStats}
+        />
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -273,7 +185,7 @@ export default function DashboardPage() {
           href="/editor"
           className={cn(
             buttonVariants({ variant: "default", size: "lg" }),
-            "inline-flex gap-2 rounded-xl"
+            "inline-flex gap-2 rounded-md"
           )}
         >
           <SettingsIcon className="size-4" />
@@ -283,12 +195,50 @@ export default function DashboardPage() {
           href="/check"
           className={cn(
             buttonVariants({ variant: "secondary", size: "lg" }),
-            "inline-flex gap-2 rounded-xl"
+            "inline-flex gap-2 rounded-md"
           )}
         >
           <CheckCircle2Icon className="size-4" />
           Mulai centang
         </Link>
+      </div>
+    </div>
+  )
+}
+
+function GenderStatsCard({
+  label,
+  color,
+  stats,
+}: {
+  label: string
+  color: "blue" | "pink"
+  stats: { total: number; checked: number; goodieBag: number; checkPct: number; goodiePct: number }
+}) {
+  const borderColor = color === "blue" ? "border-blue-500/20" : "border-pink-500/20"
+
+  return (
+    <div className={cn("rounded-md border bg-card p-4", borderColor)}>
+      <p className="text-sm font-semibold">{label}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {stats.checked} / {stats.total} hadir &middot; {stats.goodieBag} / {stats.total} goodie bag
+      </p>
+
+      <div className="mt-4 space-y-3">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <span>Kehadiran</span>
+            <span>{stats.checkPct}%</span>
+          </div>
+          <Progress value={stats.checkPct} className="h-1.5" />
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <span>Goodie Bag</span>
+            <span>{stats.goodiePct}%</span>
+          </div>
+          <Progress value={stats.goodiePct} className="h-1.5" />
+        </div>
       </div>
     </div>
   )

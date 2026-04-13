@@ -22,25 +22,25 @@ export function FilterChips({
       <Badge
         variant={active === "all" ? "default" : "outline"}
         className={cn(
-          "cursor-pointer rounded-full px-3 py-1 text-xs",
+          "cursor-pointer rounded-md px-2.5 py-1 text-xs",
           active === "all" && "bg-primary text-primary-foreground"
         )}
         onClick={() => onChange("all")}
       >
-        Semua ({total || "—"})
+        Semua ({total || "\u2014"})
       </Badge>
       {categories.map((c) => (
         <Badge
           key={c.id}
           variant={active === c.id ? "default" : "outline"}
           className={cn(
-            "cursor-pointer rounded-full border-transparent px-3 py-1 text-xs text-white",
-            active === c.id && "ring-2 ring-ring ring-offset-2 ring-offset-background"
+            "cursor-pointer rounded-md border-transparent px-2.5 py-1 text-xs text-white",
+            active === c.id && "ring-1 ring-ring ring-offset-1 ring-offset-background"
           )}
           style={{ backgroundColor: c.color }}
           onClick={() => onChange(c.id)}
         >
-          {c.name} ({counts?.[c.id] ?? "—"})
+          {c.name} ({counts?.[c.id] ?? "\u2014"})
         </Badge>
       ))}
     </div>

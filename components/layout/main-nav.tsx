@@ -35,17 +35,16 @@ export function MainNav() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-56 flex-col border-r border-sidebar-border bg-sidebar/95 px-3 py-6 backdrop-blur-md lg:flex">
-        <div className="mb-8 flex items-center gap-2 px-2">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <ArmchairIcon className="size-5" />
+      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-52 flex-col border-r border-border bg-sidebar px-3 py-5 lg:flex">
+        <div className="mb-6 flex items-center gap-2 px-2">
+          <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <ArmchairIcon className="size-4" />
           </div>
           <div className="leading-tight">
-            <p className="text-xs font-medium text-muted-foreground">SeatPlotter</p>
-            <p className="text-sm font-semibold text-sidebar-foreground">Operator</p>
+            <p className="text-sm font-semibold text-sidebar-foreground">SeatPlotter</p>
           </div>
         </div>
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-0.5">
           {items.map(({ href, label, icon: Icon }) => {
             const active =
               href === "/dashboard"
@@ -56,15 +55,13 @@ export function MainNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  buttonVariants({
-                    variant: active ? "secondary" : "ghost",
-                    size: "default",
-                  }),
-                  "h-11 w-full justify-start gap-3 rounded-xl px-3",
-                  active && "bg-primary/15 text-primary shadow-none"
+                  "flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-150",
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
-                <Icon className="size-4 shrink-0 opacity-80" />
+                <Icon className="size-4 shrink-0" />
                 {label}
               </Link>
             )
@@ -72,19 +69,16 @@ export function MainNav() {
         </nav>
         <button
           onClick={handleLogout}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "default" }),
-            "h-11 w-full justify-start gap-3 rounded-xl px-3 text-muted-foreground hover:text-destructive"
-          )}
+          className="flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-secondary hover:text-destructive"
         >
-          <LogOutIcon className="size-4 shrink-0 opacity-80" />
+          <LogOutIcon className="size-4 shrink-0" />
           Keluar
         </button>
       </aside>
 
       {/* Mobile bottom bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-border bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 backdrop-blur-md lg:hidden">
-        <div className="mx-auto flex w-full max-w-lg items-stretch justify-between gap-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 lg:hidden">
+        <div className="mx-auto flex w-full max-w-lg items-stretch justify-between">
           {items.map(({ href, label, icon: Icon }) => {
             const active =
               href === "/dashboard"
@@ -95,12 +89,13 @@ export function MainNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "flex h-14 flex-1 flex-col gap-0.5 rounded-xl py-2 text-[10px] font-medium",
-                  active && "bg-primary/15 text-primary"
+                  "flex flex-1 flex-col items-center gap-0.5 rounded-md py-1.5 text-[10px] font-medium transition-colors duration-150",
+                  active
+                    ? "text-primary"
+                    : "text-muted-foreground"
                 )}
               >
-                <Icon className="mx-auto size-5" />
+                <Icon className="size-5" />
                 <span>{label}</span>
               </Link>
             )

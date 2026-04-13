@@ -372,14 +372,14 @@ export default function BookingPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3">
           <div className="flex-1 min-w-0">
             <h1 className="truncate font-display text-sm font-bold sm:text-base">
               {config?.event_name ?? "Pilih Kursi"}
             </h1>
             <p className="text-xs text-muted-foreground">
-              {stats.available} kursi tersedia · {stats.booked} terisi
+              {stats.available} kursi tersedia &middot; {stats.booked} terisi
             </p>
           </div>
           <ConnectionBanner isConnected={isConnected} />
@@ -414,23 +414,23 @@ export default function BookingPage() {
 
         {/* TABS */}
         <div className="flex w-full justify-center">
-          <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/30 p-1">
+          <div className="inline-flex items-center rounded-md border border-border bg-secondary p-0.5">
             <button
               onClick={() => setActiveTab("male")}
-              className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
+              className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 activeTab === "male"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:bg-muted/50"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Denah PRIA
             </button>
             <button
               onClick={() => setActiveTab("female")}
-              className={`rounded-lg px-6 py-2 text-sm font-bold transition-all ${
+              className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 activeTab === "female"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:bg-muted/50"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Denah WANITA
@@ -482,13 +482,13 @@ export default function BookingPage() {
       </div>
 
       {/* Bottom Panel */}
-      <div className="sticky bottom-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur-md">
+      <div className="sticky bottom-0 z-40 border-t border-border bg-background">
         <div className="mx-auto max-w-[1400px] px-4 py-3">
           {tickets.length === 0 ? (
-            <button
-              onClick={() => setShowScanner(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
+              <button
+                onClick={() => setShowScanner(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary/90"
+              >
               <QrCodeIcon className="size-4" />
               Scan Tiket PDF
             </button>
@@ -513,10 +513,10 @@ export default function BookingPage() {
                                 setActiveTab(t.jenis_kelamin === "MALE" ? "male" : "female")
                               }
                             }}
-                            className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs transition-all ${
+                            className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors duration-150 ${
                               isSelected
-                                ? "border-primary bg-primary/10 ring-2 ring-primary ring-offset-1 ring-offset-background"
-                                : "border-border/60 bg-card/40 hover:border-primary/40"
+                                ? "border-primary bg-primary/10"
+                                : "border-border bg-card hover:border-primary/40"
                             }`}
                           >
                             <TicketIcon className="size-3.5 shrink-0 text-primary" />
@@ -570,7 +570,7 @@ export default function BookingPage() {
                           toast.success("Semua kursi berhasil disimpan permanen!")
                         }
                       }}
-                      className="mt-3 flex w-full animate-in fade-in slide-in-from-bottom-2 items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition-colors hover:bg-emerald-600 disabled:opacity-50"
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-emerald-500 disabled:opacity-50"
                     >
                       {booking ? <Loader2Icon className="size-4 animate-spin" /> : <CheckCircle2Icon className="size-4" />}
                       SIMPAN PILIHAN KURSI
@@ -616,7 +616,7 @@ export default function BookingPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowScanner(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-card/60"
+                  className="flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors duration-150 hover:bg-secondary"
                 >
                   <QrCodeIcon className="size-3" />
                   Scan lagi
@@ -641,17 +641,17 @@ export default function BookingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-2xl rounded-2xl border border-border/60 bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto"
+              exit={{ scale: 0.97, opacity: 0 }}
+              className="w-full max-w-2xl rounded-lg border border-border bg-card p-5 max-h-[90vh] overflow-y-auto"
             >
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-                  <QrCodeIcon className="size-5 text-primary" />
+                <h2 className="flex items-center gap-2 font-display text-base font-bold">
+                  <QrCodeIcon className="size-4 text-primary" />
                   Scan Tiket PDF
                 </h2>
                 {tickets.length > 0 && (
@@ -666,10 +666,10 @@ export default function BookingPage() {
 
               <label
                 htmlFor="scan-pdf-upload"
-                className={`flex cursor-pointer flex-col items-center gap-4 rounded-xl border-2 border-dashed px-6 py-10 transition-all ${
+                className={`flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed px-6 py-8 transition-colors duration-150 ${
                   scanning
                     ? "border-primary/50 bg-primary/5"
-                    : "border-border/60 hover:border-primary/40 hover:bg-muted/20"
+                    : "border-border hover:border-primary/40"
                 }`}
               >
                 {scanning ? (
@@ -706,7 +706,7 @@ export default function BookingPage() {
               </label>
 
               {previewUrl && (
-                <div className="mt-4 overflow-hidden rounded-xl border border-border/60 bg-muted/20 flex items-center justify-center">
+                <div className="mt-4 overflow-hidden rounded-md border border-border bg-secondary flex items-center justify-center">
                   <img 
                     src={previewUrl} 
                     className="max-h-[50vh] w-auto max-w-full object-contain drop-shadow-sm rounded" 

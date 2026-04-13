@@ -221,7 +221,7 @@ export function AssignPanel({
 
   return (
     <div className="space-y-4">
-      <Card className="border-border/80 bg-muted/20">
+      <Card className="border-border bg-card">
         <CardContent className="flex flex-col gap-4 pt-6">
           <div className="flex flex-wrap items-center gap-3">
             <Label className="text-muted-foreground">Mode</Label>
@@ -342,7 +342,7 @@ export function AssignPanel({
           if (!open) setEditingId(null)
         }}
       >
-        <DialogContent className="rounded-2xl">
+        <DialogContent className="rounded-lg">
           <DialogHeader>
             <DialogTitle>Edit label kursi</DialogTitle>
           </DialogHeader>

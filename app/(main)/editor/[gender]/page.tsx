@@ -59,8 +59,8 @@ export default function EditorGenderPage() {
   if (!hydrated || !layout) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-10 w-48 rounded-xl" />
-        <Skeleton className="h-96 rounded-2xl" />
+        <Skeleton className="h-10 w-48 rounded-md" />
+        <Skeleton className="h-96 rounded-md" />
       </div>
     )
   }
@@ -82,7 +82,7 @@ export default function EditorGenderPage() {
           </div>
           <Badge
             variant="secondary"
-            className="w-fit shrink-0 rounded-full px-3 py-1 text-xs sm:text-sm"
+            className="w-fit shrink-0 rounded-md px-2.5 py-1 text-xs sm:text-sm"
           >
             {seatCount} kursi
           </Badge>
@@ -110,16 +110,16 @@ export default function EditorGenderPage() {
       </header>
 
       <Tabs value={tab} onValueChange={setTab} className="w-full min-w-0 flex-col">
-        <div className="sticky top-0 z-30 -mx-4 border-b border-border/80 bg-background/90 px-4 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 sm:static sm:z-auto sm:mx-0 sm:rounded-xl sm:border sm:border-border/60 sm:bg-muted/40 sm:px-2 sm:py-2 sm:backdrop-blur-none">
-          <TabsList className="grid h-auto min-h-[3rem] w-full grid-cols-3 gap-1 rounded-lg bg-transparent p-0 sm:min-h-9 sm:rounded-xl sm:bg-muted/50 sm:p-1">
+        <div className="sticky top-0 z-30 -mx-4 border-b border-border bg-background px-4 py-3 sm:static sm:z-auto sm:mx-0 sm:rounded-md sm:border sm:border-border sm:bg-secondary sm:px-2 sm:py-2">
+          <TabsList className="grid h-auto min-h-[3rem] w-full grid-cols-3 gap-1 rounded-md bg-transparent p-0 sm:min-h-9 sm:rounded-md sm:bg-secondary sm:p-1">
             {STEPS.map(({ value, title, hint, icon: Icon }, i) => (
               <TabsTrigger
                 key={value}
                 value={value}
                 className={cn(
-                  "touch-manipulation rounded-lg px-1 py-2.5 text-[11px] leading-tight sm:min-h-0 sm:px-2 sm:py-2 sm:text-sm",
+                  "touch-manipulation rounded-md px-1 py-2.5 text-[11px] leading-tight sm:min-h-0 sm:px-2 sm:py-2 sm:text-sm",
                   "flex min-h-[3rem] flex-col items-center justify-center gap-0.5 sm:min-h-8 sm:flex-row sm:gap-2",
-                  "data-active:ring-2 data-active:ring-primary/35"
+                  "data-active:ring-1 data-active:ring-primary/40"
                 )}
               >
                 <Icon className="size-4 shrink-0 opacity-80" aria-hidden />

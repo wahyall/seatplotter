@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
 import type { ParticipantRow } from "@/types/db"
@@ -330,105 +329,76 @@ export default function ImportParticipantsPage() {
 
   /* ---------- render ---------- */
   return (
-    <div className="space-y-8 pb-12">
-      {/* Header */}
-      <header className="space-y-2">
-        <div className="flex items-center gap-2 text-primary">
-          <FileSpreadsheetIcon className="size-7" />
-          <span className="font-display text-lg font-semibold tracking-tight">
-            Import Peserta
-          </span>
-        </div>
-        <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
-          Import Data Peserta dari Excel
+    <div className="space-y-6 pb-12">
+      <header className="space-y-1">
+        <h1 className="font-display text-xl font-bold tracking-tight">
+          Import Peserta
         </h1>
         <p className="text-sm text-muted-foreground">
-          Upload file Excel (.xlsx, .xls) yang berisi data peserta, mapping
-          kolom, lalu simpan ke database.
+          Upload file Excel (.xlsx, .xls), mapping kolom, lalu simpan ke database.
         </p>
       </header>
 
       {/* Upload Area */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        <Card
-          className={cn(
-            "relative overflow-hidden border-dashed transition-colors duration-200",
-            file
-              ? "border-emerald-500/40 bg-emerald-500/5"
-              : "border-border/60 hover:border-primary/40"
-          )}
-        >
-          <CardContent className="p-6">
-            {!file ? (
-              <label
-                htmlFor="excel-upload"
-                className="flex cursor-pointer flex-col items-center gap-4 py-8"
-              >
-                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <UploadIcon className="size-7" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium">
-                    Klik atau drag file Excel ke sini
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    .xlsx atau .xls — maks 10MB
-                  </p>
-                </div>
-                <Input
-                  id="excel-upload"
-                  type="file"
-                  accept=".xlsx,.xls"
-                  className="sr-only"
-                  onChange={handleFile}
-                />
-              </label>
-            ) : (
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500">
-                    <CheckCircle2Icon className="size-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {rawRows.length} baris · {headers.length} kolom ·{" "}
-                      {validCount} valid
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFile}
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                >
-                  <XIcon className="size-4" />
-                </Button>
+      <div className={cn(
+        "rounded-md border border-dashed transition-colors duration-150",
+        file
+          ? "border-emerald-500/40 bg-emerald-500/5"
+          : "border-border hover:border-primary/40"
+      )}>
+        <div className="p-5">
+          {!file ? (
+            <label
+              htmlFor="excel-upload"
+              className="flex cursor-pointer flex-col items-center gap-3 py-6"
+            >
+              <UploadIcon className="size-6 text-muted-foreground" />
+              <div className="text-center">
+                <p className="text-sm font-medium">
+                  Klik untuk upload file Excel
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  .xlsx atau .xls &mdash; maks 10MB
+                </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+              <Input
+                id="excel-upload"
+                type="file"
+                accept=".xlsx,.xls"
+                className="sr-only"
+                onChange={handleFile}
+              />
+            </label>
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle2Icon className="size-5 shrink-0 text-emerald-500" />
+                <div>
+                  <p className="text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {rawRows.length} baris &middot; {headers.length} kolom &middot;{" "}
+                    {validCount} valid
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFile}
+                className="shrink-0 text-muted-foreground hover:text-destructive"
+              >
+                <XIcon className="size-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* Column Mapping */}
-      <AnimatePresence>
-        {headers.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25 }}
-            className="space-y-6"
-          >
-            <Card className="overflow-hidden border-border/60">
+      {headers.length > 0 && (
+          <div className="space-y-6">
+            <Card className="overflow-hidden border-border">
               <CardHeader>
-                <CardTitle className="text-base">
-                  <FilterIcon className="mr-2 inline size-4 text-primary" />
+                <CardTitle className="text-sm font-semibold">
                   Mapping Kolom
                 </CardTitle>
                 <CardDescription>
@@ -475,10 +445,9 @@ export default function ImportParticipantsPage() {
             </Card>
 
             {/* Preview Table */}
-            <Card className="overflow-hidden border-border/60">
+            <Card className="overflow-hidden border-border">
               <CardHeader>
-                <CardTitle className="text-base">
-                  <SearchIcon className="mr-2 inline size-4 text-primary" />
+                <CardTitle className="text-sm font-semibold">
                   Preview Data ({validCount} valid dari {rawRows.length})
                 </CardTitle>
               </CardHeader>
@@ -487,7 +456,7 @@ export default function ImportParticipantsPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b border-border/60 bg-muted/30">
+                        <tr className="border-b border-border bg-secondary">
                           <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
                             #
                           </th>
@@ -546,7 +515,7 @@ export default function ImportParticipantsPage() {
                     </table>
                   </div>
                   {rawRows.length > 50 && (
-                    <div className="border-t border-border/30 px-3 py-2 text-center text-xs text-muted-foreground">
+                    <div className="border-t border-border px-3 py-2 text-center text-xs text-muted-foreground">
                       Menampilkan 50 dari {rawRows.length} baris
                     </div>
                   )}
@@ -559,7 +528,7 @@ export default function ImportParticipantsPage() {
               <Button
                 onClick={() => handleSave(true)}
                 disabled={saving || validCount === 0}
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-md"
                 size="lg"
               >
                 <SaveIcon className="size-4" />
@@ -569,7 +538,7 @@ export default function ImportParticipantsPage() {
                 onClick={() => handleSave(false)}
                 disabled={saving || validCount === 0}
                 variant="secondary"
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-md"
                 size="lg"
               >
                 <DownloadIcon className="size-4" />
@@ -581,9 +550,8 @@ export default function ImportParticipantsPage() {
                 </div>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+      )}
 
       {/* Saved Data Section */}
       <div className="space-y-4">
@@ -615,13 +583,8 @@ export default function ImportParticipantsPage() {
           </div>
         </div>
 
-        {/* Stats Badges */}
         {!loadingDb && participants.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-wrap gap-2"
-          >
+          <div className="flex flex-wrap gap-2">
             <Badge
               variant="outline"
               className="gap-1 border-primary/30 bg-primary/5 px-3 py-1.5 text-xs"
@@ -639,7 +602,7 @@ export default function ImportParticipantsPage() {
                 {ticket}: {count}
               </Badge>
             ))}
-          </motion.div>
+          </div>
         )}
 
         {/* Filter & Search */}
@@ -680,23 +643,19 @@ export default function ImportParticipantsPage() {
             <Skeleton className="h-10 w-full rounded-xl" />
           </div>
         ) : participants.length === 0 ? (
-          <Card className="border-dashed border-border/60">
-            <CardContent className="flex flex-col items-center gap-3 py-12">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
-                <AlertCircleIcon className="size-6" />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Belum ada data peserta. Import dari file Excel di atas.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="rounded-md border border-dashed border-border py-10 text-center">
+            <AlertCircleIcon className="mx-auto size-5 text-muted-foreground" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Belum ada data peserta. Import dari file Excel di atas.
+            </p>
+          </div>
         ) : (
-          <Card className="overflow-hidden border-border/60">
+          <Card className="overflow-hidden border-border">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-border/60 bg-muted/50">
+                    <tr className="border-b border-border bg-secondary">
                       <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
                         #
                       </th>
@@ -782,7 +741,7 @@ export default function ImportParticipantsPage() {
               )}
               {/* Pagination Controls */}
               {participants.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/40 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
                       {startIndex + 1}–{Math.min(startIndex + perPage, totalItems)}{" "}

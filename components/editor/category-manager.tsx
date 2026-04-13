@@ -100,7 +100,7 @@ export function CategoryManager({
   }
 
   return (
-    <Card className="border-border/80 bg-card/80 shadow-lg">
+    <Card className="border-border bg-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-display text-xl">
           <PaletteIcon className="size-5 text-primary" />
@@ -155,7 +155,7 @@ export function CategoryManager({
         </Button>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="rounded-2xl">
+          <DialogContent className="rounded-lg">
             <DialogHeader>
               <DialogTitle>Kategori baru</DialogTitle>
             </DialogHeader>
@@ -198,7 +198,7 @@ export function CategoryManager({
         </Dialog>
 
         <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
-          <DialogContent className="rounded-2xl">
+          <DialogContent className="rounded-lg">
             <DialogHeader>
               <DialogTitle>Edit kategori</DialogTitle>
             </DialogHeader>

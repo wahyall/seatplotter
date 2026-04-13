@@ -12,7 +12,7 @@ export default function MainLayout({
       <AppErrorBoundary>
         <div className="flex min-h-screen flex-col lg:flex-row lg:pb-0">
           <MainNav />
-          <main className="flex flex-1 flex-col pb-24 pt-4 lg:pb-8 lg:pl-56 lg:pt-6">
+          <main className="flex flex-1 flex-col pb-24 pt-4 lg:pb-8 lg:pl-52 lg:pt-5">
             <div className="mx-auto w-full max-w-6xl flex-1 px-4">{children}</div>
           </main>
         </div>

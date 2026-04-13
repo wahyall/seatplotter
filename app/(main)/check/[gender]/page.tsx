@@ -310,13 +310,13 @@ export default function CheckGenderPage() {
         </p>
       </div>
 
-      <div className="flex bg-muted/30 p-1 rounded-xl w-fit">
+      <div className="flex rounded-md border border-border bg-secondary p-0.5 w-fit">
         <button
           onClick={() => setPageMode("check")}
           className={cn(
-            "px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2",
+            "px-3 py-1.5 text-xs font-medium rounded-[3px] transition-colors duration-150 flex items-center gap-1.5",
             pageMode === "check"
-              ? "bg-card text-foreground shadow-sm"
+              ? "bg-card text-foreground"
               : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -326,9 +326,9 @@ export default function CheckGenderPage() {
         <button
           onClick={() => setPageMode("goodie_bag")}
           className={cn(
-            "px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2",
+            "px-3 py-1.5 text-xs font-medium rounded-[3px] transition-colors duration-150 flex items-center gap-1.5",
             pageMode === "goodie_bag"
-              ? "bg-card text-foreground shadow-sm"
+              ? "bg-card text-foreground"
               : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -337,11 +337,7 @@ export default function CheckGenderPage() {
         </button>
       </div>
 
-      <motion.div
-        className="rounded-2xl border border-border/80 bg-card/50 p-4"
-        initial={false}
-        animate={{ opacity: 1 }}
-      >
+      <div className="rounded-md border border-border bg-card p-4">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-2xl font-bold tabular-nums">
@@ -350,12 +346,12 @@ export default function CheckGenderPage() {
             </p>
             <p className="text-xs text-muted-foreground">{stats.label}</p>
           </div>
-          <span className="text-3xl font-bold tabular-nums text-primary">
+          <span className="text-2xl font-bold tabular-nums text-primary">
             {stats.pct}%
           </span>
         </div>
-        <Progress value={stats.pct} className="h-3" />
-      </motion.div>
+        <Progress value={stats.pct} className="h-2" />
+      </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4 mb-2">
         <FilterChips
@@ -419,17 +415,16 @@ export default function CheckGenderPage() {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex flex-col bg-background"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <QrCodeIcon className="size-4 text-primary" />
-                Scan QR —{" "}
+                Scan QR &mdash;{" "}
                 {useSeatStore.getState().seats[gender][qrModalSeatId]?.label ??
                   qrModalSeatId}
               </div>
               <button
                 onClick={() => setQrModalSeatId(null)}
-                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-secondary hover:text-foreground"
               >
                 <XIcon className="size-5" />
               </button>
@@ -444,15 +439,14 @@ export default function CheckGenderPage() {
               />
             </div>
 
-            {/* Footer action */}
-            <div className="border-t border-border/60 p-4 space-y-3">
+            <div className="border-t border-border p-4 space-y-3">
               <p className="text-center text-xs text-muted-foreground">
                 Klik tombol di bawah ini jika sudah melakukan scan QR.
               </p>
               <Button
                 onClick={confirmScanAndCheck}
                 size="lg"
-                className="w-full gap-2 rounded-xl"
+                className="w-full gap-2 rounded-md"
               >
                 <CheckCircle2Icon className="size-4" />
                 Tutup & Centang Kursi
@@ -469,54 +463,54 @@ export default function CheckGenderPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl"
+              exit={{ scale: 0.97, opacity: 0 }}
+              className="w-full max-w-md overflow-hidden rounded-lg border border-border bg-card"
             >
-              <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 p-4">
-                <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-                  <UserIcon className="size-5 text-primary" />
+              <div className="flex items-center justify-between border-b border-border p-4">
+                <h2 className="flex items-center gap-2 font-display text-base font-bold">
+                  <UserIcon className="size-4 text-primary" />
                   Info Peserta
                 </h2>
                 <button
                   onClick={() => setParticipantInfoSeatId(null)}
-                  className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-secondary hover:text-foreground"
                 >
                   <XIcon className="size-5" />
                 </button>
               </div>
 
-              <div className="p-6">
+              <div className="p-5">
                 {loadingParticipant ? (
                   <div className="py-8 text-center text-sm text-muted-foreground">
                     Memuat data peserta...
                   </div>
                 ) : activeModalSeat?.participants ? (
-                  <div className="space-y-4">
-                    <div className="rounded-xl border border-border/40 bg-card/50 p-4">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  <div className="space-y-3">
+                    <div className="rounded-md border border-border p-3">
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                         Nama Lengkap
                       </p>
-                      <p className="font-semibold">
+                      <p className="font-semibold text-sm">
                         {activeModalSeat.participants.nama}
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="rounded-xl border border-border/40 bg-card/50 p-4">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-md border border-border p-3">
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                           Tiket
                         </p>
                         <p className="font-semibold text-sm">
                           {activeModalSeat.participants.tiket || "-"}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-border/40 bg-card/50 p-4">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                      <div className="rounded-md border border-border p-3">
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                           Kode QR
                         </p>
                         <p className="font-semibold text-sm font-mono">
@@ -525,9 +519,9 @@ export default function CheckGenderPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="rounded-xl border border-border/40 bg-card/50 p-4">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-md border border-border p-3">
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                           Email
                         </p>
                         <p
@@ -537,8 +531,8 @@ export default function CheckGenderPage() {
                           {activeModalSeat.participants.email || "-"}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-border/40 bg-card/50 p-4">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                      <div className="rounded-md border border-border p-3">
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
                           Telepon
                         </p>
                         <p className="font-semibold text-xs">

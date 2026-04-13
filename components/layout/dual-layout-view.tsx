@@ -73,7 +73,7 @@ export function DualLayoutView({
         {showMale && (
           <section
             className={cn(
-              "flex flex-col rounded-2xl border border-blue-500/20 bg-blue-500/5 p-3",
+              "flex flex-col rounded-md border border-blue-500/20 p-3",
               singleColumn
                 ? "w-full max-w-2xl flex-1"
                 : "min-w-[min(100%,380px)] flex-1"
@@ -100,7 +100,7 @@ export function DualLayoutView({
         {showFemale && (
           <section
             className={cn(
-              "flex flex-col rounded-2xl border border-pink-500/20 bg-pink-500/5 p-3",
+              "flex flex-col rounded-md border border-pink-500/20 p-3",
               singleColumn
                 ? "w-full max-w-2xl flex-1"
                 : "min-w-[min(100%,380px)] flex-1"

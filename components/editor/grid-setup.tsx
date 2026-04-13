@@ -120,7 +120,7 @@ export function GridSetup({
   }
 
   return (
-    <Card className="min-w-0 border-border/80 bg-card/80 shadow-lg">
+    <Card className="min-w-0 border-border bg-card">
       <CardHeader className="space-y-2 px-4 pt-5 sm:px-6 sm:pt-6">
         <CardTitle className="flex items-start gap-2 font-display text-lg sm:items-center sm:text-xl">
           <SparklesIcon className="mt-0.5 size-5 shrink-0 text-primary sm:mt-0" />
@@ -186,7 +186,7 @@ export function GridSetup({
           </Select>
         </div>
 
-        <div className="flex flex-col gap-3 rounded-xl border border-border/80 bg-muted/30 p-4">
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-secondary p-4">
           <div className="flex items-start gap-3">
             <Checkbox
               id="rev"

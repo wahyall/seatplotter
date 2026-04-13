@@ -74,14 +74,14 @@ export default function ViewPage() {
         <div>
           <h1 className="font-display text-xl font-bold">Tampilan denah</h1>
           <p className="text-sm text-muted-foreground">
-            Pilih sisi — tap kursi untuk detail.
+            Pilih sisi &mdash; tap kursi untuk detail.
           </p>
         </div>
         <Button
           type="button"
           size="icon"
           variant="secondary"
-          className="shrink-0 rounded-full shadow-lg"
+          className="shrink-0 rounded-md"
           onClick={() => {
             useLayoutStore.getState().setIsExporting(true);
             setTimeout(() => {
@@ -102,14 +102,14 @@ export default function ViewPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <Label className="text-muted-foreground">Sisi</Label>
-        <div className="inline-flex rounded-xl border border-border bg-background p-1">
+        <div className="inline-flex rounded-md border border-border bg-secondary p-0.5">
           <Button
             type="button"
             variant={viewGender === "male" ? "secondary" : "ghost"}
             size="sm"
             className={cn(
-              "rounded-lg px-4",
-              viewGender === "male" && "text-blue-400"
+              "rounded-[3px] px-4",
+              viewGender === "male" && "bg-card text-blue-400"
             )}
             onClick={() => setViewGender("male")}
           >
@@ -120,8 +120,8 @@ export default function ViewPage() {
             variant={viewGender === "female" ? "secondary" : "ghost"}
             size="sm"
             className={cn(
-              "rounded-lg px-4",
-              viewGender === "female" && "text-pink-400"
+              "rounded-[3px] px-4",
+              viewGender === "female" && "bg-card text-pink-400"
             )}
             onClick={() => setViewGender("female")}
           >
