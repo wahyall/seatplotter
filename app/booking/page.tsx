@@ -60,6 +60,7 @@ export default function BookingPage() {
   const [microLoading, setMicroLoading] = React.useState(false)
   const isProcessingRef = React.useRef(false)
   const [activeTab, setActiveTab] = React.useState<Gender>("male")
+  const [authHashes, setAuthHashes] = React.useState<Record<string, string>>({})
 
   // Scan modal state
   const [showScanner, setShowScanner] = React.useState(false)
@@ -108,6 +109,39 @@ export default function BookingPage() {
     () => new Set(tickets.map((t) => t.id)),
     [tickets]
   )
+
+  // Fetch auth hashes for booked tickets (anti-forgery patterns)
+  React.useEffect(() => {
+    const booked = tickets.filter((t) => t.already_booked && t.seat_id)
+    if (booked.length === 0) return
+
+    const allSeats = [...seatsM, ...seatsF]
+
+    booked.forEach(async (t) => {
+      if (authHashes[t.id]) return
+      const seat = allSeats.find((s) => s.id === t.seat_id)
+      if (!seat) return
+      try {
+        const res = await fetch("/api/ticket/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            participantId: t.id,
+            kodeTiket: t.kode_tiket,
+            nama: t.nama,
+            seatLabel: seat.label,
+          }),
+        })
+        const data = await res.json()
+        if (data.hash) {
+          setAuthHashes((prev) => ({ ...prev, [t.id]: data.hash }))
+        }
+      } catch {
+        // silently skip — ticket will render without auth pattern
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickets, seatsM, seatsF])
 
   function mapDisplaySeats(seatsData: typeof seatsM, categories: typeof categoriesM, gridGender: Gender) {
     let list = seatsData.map((s) => {
@@ -606,7 +640,7 @@ export default function BookingPage() {
                         >
                           <DownloadIcon className="size-3" />
                         </button>
-                        <TicketPrint ticket={t} seatLabel={seatLabel} config={config} />
+                        <TicketPrint ticket={t} seatLabel={seatLabel} config={config} authHash={authHashes[t.id]} />
                       </span>
                     )
                   })}
