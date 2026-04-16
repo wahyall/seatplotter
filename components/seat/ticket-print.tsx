@@ -142,16 +142,28 @@ function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
     <div className="relative inline-flex items-center justify-center">
       <div className="bg-white text-red-500 font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
         <span
-          className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]"
+          className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block mr-1"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(220,18,5,0.2), rgba(220,18,5,0.2)), url('/ticket.png')",
+              "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
             backgroundSize: "cover",
             backgroundPosition: "top center",
             backgroundRepeat: "no-repeat",
           }}
         >
-          {seatLabel.replace("_", " ")}
+          {seatLabel.split("_")[0]}
+        </span>
+        <span
+          className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "top center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {seatLabel.split("_")[1]}
         </span>
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none z-30"
@@ -325,16 +337,28 @@ export function TicketPrint({
               ) : (
                 <div className="bg-white text-red-500 font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
                   <span
-                    className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]"
+                    className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block mr-1"
                     style={{
                       backgroundImage:
-                        "linear-gradient(rgba(220,18,5,0.2), rgba(220,18,5,0.2)), url('/ticket.png')",
+                        "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
                       backgroundSize: "cover",
                       backgroundPosition: "top center",
                       backgroundRepeat: "no-repeat",
                     }}
                   >
-                    {seatLabel.replace("_", " ")}
+                    {seatLabel.split("_")[0]}
+                  </span>
+                  <span
+                    className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "top center",
+                      backgroundRepeat: "no-repeat",
+                    }}
+                  >
+                    {seatLabel.split("_")[1]}
                   </span>
                 </div>
               )}

@@ -403,6 +403,11 @@ export default function BookingPage() {
 
   const unbookedTickets = tickets.filter((t) => !t.already_booked)
   const bookedTickets = tickets.filter((t) => t.already_booked)
+  const selectedTicket = selectedTicketId
+    ? tickets.find((t) => t.id === selectedTicketId) ?? null
+    : null
+  const disableMaleTab = selectedTicket?.jenis_kelamin === "FEMALE"
+  const disableFemaleTab = selectedTicket?.jenis_kelamin === "MALE"
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -450,21 +455,33 @@ export default function BookingPage() {
         <div className="flex w-full justify-center">
           <div className="inline-flex items-center rounded-md border border-border bg-secondary p-0.5">
             <button
-              onClick={() => setActiveTab("male")}
+              onClick={() => {
+                if (disableMaleTab) return
+                setActiveTab("male")
+              }}
+              disabled={disableMaleTab}
               className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 activeTab === "male"
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : disableMaleTab
+                    ? "cursor-not-allowed opacity-45 text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Denah PRIA
             </button>
             <button
-              onClick={() => setActiveTab("female")}
+              onClick={() => {
+                if (disableFemaleTab) return
+                setActiveTab("female")
+              }}
+              disabled={disableFemaleTab}
               className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 activeTab === "female"
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : disableFemaleTab
+                    ? "cursor-not-allowed opacity-45 text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Denah WANITA
@@ -484,7 +501,7 @@ export default function BookingPage() {
                 categories={categoriesM}
                 mode="booking"
                 onSeatAction={handleSeatClickM}
-                className="w-full"
+                className="w-full md:w-auto md:self-center md:max-w-full"
               />
             </div>
           )}
@@ -499,7 +516,7 @@ export default function BookingPage() {
                 categories={categoriesF}
                 mode="booking"
                 onSeatAction={handleSeatClickF}
-                className="w-full"
+                className="w-full md:w-auto md:self-center md:max-w-full"
               />
             </div>
           )}
