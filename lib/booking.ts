@@ -7,14 +7,15 @@ export interface ValidatedTicket extends ParticipantRow {
   matched_category?: string
 }
 
-/** Validate kode_tiket values against the participants database */
+/** Validate kode_tiket values against participants for this event only. */
 export async function validateTickets(
-  kodeTikets: string[]
+  kodeTikets: string[],
+  eventId: string
 ): Promise<{ success: boolean; tickets: ValidatedTicket[]; error?: string }> {
   const res = await fetch("/api/booking/validate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kode_tikets: kodeTikets }),
+    body: JSON.stringify({ kode_tikets: kodeTikets, event_id: eventId }),
   })
   return res.json()
 }

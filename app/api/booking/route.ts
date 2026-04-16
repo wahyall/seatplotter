@@ -63,6 +63,29 @@ export async function POST(req: Request) {
     );
   }
 
+  const { data: layoutRow, error: layoutErr } = await supabaseAdmin
+    .from("layouts")
+    .select("event_id")
+    .eq("id", seat.layout_id)
+    .single();
+
+  if (layoutErr || !layoutRow) {
+    return Response.json(
+      { success: false, error: "Layout kursi tidak ditemukan" },
+      { status: 500 },
+    );
+  }
+
+  if (layoutRow.event_id !== participant.event_id) {
+    return Response.json(
+      {
+        success: false,
+        error: "Tiket tidak berlaku untuk event ini — kursi milik event lain",
+      },
+      { status: 403 },
+    );
+  }
+
   if (seat.is_empty) {
     return Response.json(
       { success: false, error: "Kursi ini tidak tersedia" },

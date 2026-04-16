@@ -90,19 +90,24 @@ export default function BookingPage() {
 
   const ticketRefreshRef = React.useRef(false)
   React.useEffect(() => {
-    if (tickets.length === 0 || ticketRefreshRef.current) return
+    ticketRefreshRef.current = false
+  }, [event?.id])
+
+  React.useEffect(() => {
+    if (!event?.id || tickets.length === 0 || ticketRefreshRef.current) return
     ticketRefreshRef.current = true
     const kodeTikets = tickets.map((t) => t.kode_tiket)
-    validateTickets(kodeTikets).then((res) => {
-      if (res.success) {
-        setTickets(res.tickets)
-      }
-      ticketRefreshRef.current = false
-    }).catch(() => {
-      ticketRefreshRef.current = false
-    })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    validateTickets(kodeTikets, event.id)
+      .then((res) => {
+        if (res.success) {
+          setTickets(res.tickets)
+        }
+        ticketRefreshRef.current = false
+      })
+      .catch(() => {
+        ticketRefreshRef.current = false
+      })
+  }, [event?.id, tickets.length])
 
   const myParticipantIds = React.useMemo(
     () => new Set(tickets.map((t) => t.id)),
@@ -348,10 +353,16 @@ export default function BookingPage() {
         return
       }
 
+      if (!event?.id) {
+        toast.error("Event belum dimuat")
+        setScanning(false)
+        return
+      }
+
       const allKodeTikets = [
         ...new Set([...results.map((r) => r.value), ...tickets.map((t) => t.kode_tiket)]),
       ]
-      const response = await validateTickets(allKodeTikets)
+      const response = await validateTickets(allKodeTikets, event.id)
 
       if (!response.success) {
         toast.error(response.error ?? "Gagal validasi tiket")
