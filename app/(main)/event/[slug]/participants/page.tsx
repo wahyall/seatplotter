@@ -4,6 +4,7 @@ import * as React from "react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
 import type { ParticipantRow } from "@/types/db"
+import { useLayoutStore } from "@/store/useLayoutStore"
 import {
   Card,
   CardContent,
@@ -124,6 +125,8 @@ function autoMap(headers: string[]): ColumnMapping {
 
 /* ---------- main component ---------- */
 export default function ImportParticipantsPage() {
+  const event = useLayoutStore((s) => s.event)
+  const eventId = event?.id ?? ""
   const [file, setFile] = React.useState<File | null>(null)
   const [headers, setHeaders] = React.useState<string[]>([])
   const [rawRows, setRawRows] = React.useState<Record<string, string>[]>([])
@@ -163,8 +166,8 @@ export default function ImportParticipantsPage() {
 
   /* ---------- load saved participants ---------- */
   React.useEffect(() => {
-    fetchParticipants()
-  }, [page, perPage, debouncedSearch, ticketFilter])
+    if (eventId) fetchParticipants()
+  }, [page, perPage, debouncedSearch, ticketFilter, eventId])
 
   async function fetchParticipants() {
     setLoadingDb(true)
@@ -173,7 +176,8 @@ export default function ImportParticipantsPage() {
         page: String(page),
         perPage: String(perPage),
         search: debouncedSearch,
-        tiket: ticketFilter === "all" ? "" : ticketFilter
+        tiket: ticketFilter === "all" ? "" : ticketFilter,
+        event_id: eventId,
       })
       const res = await fetch(`/api/participants?${qs.toString()}`)
       const json = await res.json()
@@ -278,6 +282,7 @@ export default function ImportParticipantsPage() {
         body: JSON.stringify({
           participants: mappedData.filter((p) => p.nama.trim()),
           replace,
+          event_id: eventId,
         }),
       })
       setSaveProgress(80)
@@ -306,7 +311,7 @@ export default function ImportParticipantsPage() {
     if (!confirm("Hapus semua data peserta? Tindakan ini tidak bisa dibatalkan."))
       return
     try {
-      const res = await fetch("/api/participants", { method: "DELETE" })
+      const res = await fetch(`/api/participants?event_id=${eventId}`, { method: "DELETE" })
       const json = await res.json()
       if (json.success) {
         toast.success("Semua data peserta dihapus")

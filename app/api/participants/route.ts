@@ -25,9 +25,16 @@ export async function POST(req: Request) {
     )
   }
 
+  const eventId = body.event_id as string | undefined
+  if (!eventId) {
+    return Response.json(
+      { success: false, error: "event_id is required" },
+      { status: 400 }
+    )
+  }
+
   const participants: ParticipantInput[] = body.participants
 
-  // Validate each participant has at least a nama
   const valid = participants.filter((p) => p.nama && p.nama.trim() !== "")
   if (valid.length === 0) {
     return Response.json(
@@ -36,12 +43,11 @@ export async function POST(req: Request) {
     )
   }
 
-  // If replace mode, delete all existing participants first
   if (body.replace === true) {
     const { error: delErr } = await supabaseAdmin
       .from("participants")
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000")
+      .eq("event_id", eventId)
     if (delErr) {
       return Response.json(
         { success: false, error: delErr.message },
@@ -50,7 +56,6 @@ export async function POST(req: Request) {
     }
   }
 
-  // Insert in chunks of 500 for better throughput
   const CHUNK = 500
   let inserted = 0
   for (let i = 0; i < valid.length; i += CHUNK) {
@@ -61,6 +66,7 @@ export async function POST(req: Request) {
       telepon: String(p.telepon ?? "").trim(),
       tiket: (p.tiket ?? "").trim().replace(/\s*-\s*\(.*?\)\s*$/, ""),
       kode_tiket: (p.kode_tiket ?? "").trim(),
+      event_id: eventId,
     }))
     const { error } = await supabaseAdmin.from("participants").insert(chunk)
     if (error) {
@@ -87,6 +93,7 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url)
+  const eventId = url.searchParams.get("event_id") ?? ""
   const page = Math.max(1, Number(url.searchParams.get("page")) || 1)
   const perPage = Math.min(100, Math.max(1, Number(url.searchParams.get("perPage")) || 25))
   const search = (url.searchParams.get("search") ?? "").trim()
@@ -94,17 +101,19 @@ export async function GET(req: Request) {
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
-  // Build query
   let query = supabaseAdmin
     .from("participants")
     .select("*", { count: "exact" })
+
+  if (eventId) {
+    query = query.eq("event_id", eventId)
+  }
 
   if (tiket) {
     query = query.eq("tiket", tiket)
   }
 
   if (search) {
-    // Use ilike for search across multiple columns
     query = query.or(
       `nama.ilike.%${search}%,email.ilike.%${search}%,telepon.ilike.%${search}%,kode_tiket.ilike.%${search}%`
     )
@@ -121,10 +130,11 @@ export async function GET(req: Request) {
     )
   }
 
-  // Fetch distinct ticket types for filter (lightweight query)
-  const { data: ticketData } = await supabaseAdmin
-    .from("participants")
-    .select("tiket")
+  let ticketQuery = supabaseAdmin.from("participants").select("tiket")
+  if (eventId) {
+    ticketQuery = ticketQuery.eq("event_id", eventId)
+  }
+  const { data: ticketData } = await ticketQuery
 
   const ticketTypes = Array.from(
     new Set((ticketData ?? []).map((r: { tiket: string }) => r.tiket).filter(Boolean))
@@ -136,10 +146,13 @@ export async function GET(req: Request) {
     stats[t] = (stats[t] || 0) + 1
   }
 
-  // Total count (unfiltered) for stats
-  const { count: totalCount } = await supabaseAdmin
+  let totalQuery = supabaseAdmin
     .from("participants")
     .select("*", { count: "exact", head: true })
+  if (eventId) {
+    totalQuery = totalQuery.eq("event_id", eventId)
+  }
+  const { count: totalCount } = await totalQuery
 
   return Response.json({
     success: true,
@@ -153,7 +166,7 @@ export async function GET(req: Request) {
   })
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
   if (!supabaseAdmin) {
     return Response.json(
       { success: false, error: "Server misconfigured" },
@@ -161,10 +174,18 @@ export async function DELETE() {
     )
   }
 
-  const { error } = await supabaseAdmin
-    .from("participants")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000")
+  const url = new URL(req.url)
+  const eventId = url.searchParams.get("event_id") ?? ""
+
+  let query = supabaseAdmin.from("participants").delete()
+
+  if (eventId) {
+    query = query.eq("event_id", eventId)
+  } else {
+    query = query.neq("id", "00000000-0000-0000-0000-000000000000")
+  }
+
+  const { error } = await query
 
   if (error) {
     return Response.json(

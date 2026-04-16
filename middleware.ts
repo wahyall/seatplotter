@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
   if (isPublicPath) {
     // If already logged in and visiting /login, redirect to dashboard
     if (pathname === "/login" && session?.value) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/events", request.url));
     }
     return NextResponse.next();
   }

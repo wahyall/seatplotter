@@ -9,8 +9,14 @@ import { useSeatStore } from "@/store/useSeatStore"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangleIcon } from "lucide-react"
 
-export function AppDataProvider({ children }: { children: React.ReactNode }) {
-  const setConfig = useLayoutStore((s) => s.setConfig)
+export function AppDataProvider({
+  slug,
+  children,
+}: {
+  slug: string
+  children: React.ReactNode
+}) {
+  const setEvent = useLayoutStore((s) => s.setEvent)
   const setLayouts = useLayoutStore((s) => s.setLayouts)
   const setCategories = useLayoutStore((s) => s.setCategories)
   const setHydrated = useLayoutStore((s) => s.setHydrated)
@@ -25,17 +31,22 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         return
       }
       try {
-        const { data: configRows } = await supabase
-          .from("config")
+        const { data: eventRow } = await supabase
+          .from("events")
           .select("*")
-          .limit(1)
-          .maybeSingle()
+          .eq("slug", slug)
+          .single()
         if (cancelled) return
-        setConfig(configRows)
+        setEvent(eventRow)
+
+        if (!eventRow) {
+          return
+        }
 
         const { data: layouts } = await supabase
           .from("layouts")
           .select("*")
+          .eq("event_id", eventRow.id)
           .order("gender")
         if (cancelled) return
         const male = layouts?.find((l) => l.gender === "male") ?? null
@@ -69,7 +80,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [setConfig, setLayouts, setCategories, setHydrated, setSeats])
+  }, [slug, setEvent, setLayouts, setCategories, setHydrated, setSeats])
 
   if (!isSupabaseConfigured) {
     return (

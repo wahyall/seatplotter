@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import { useLayoutStore } from "@/store/useLayoutStore"
@@ -14,7 +15,6 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  ArmchairIcon,
   CalendarIcon,
   MapPinIcon,
   RadioIcon,
@@ -48,15 +48,16 @@ function statsForGender(
 }
 
 export default function DashboardPage() {
+  const { slug } = useParams<{ slug: string }>()
   const hydrated = useLayoutStore((s) => s.hydrated)
-  const config = useLayoutStore((s) => s.config)
+  const event = useLayoutStore((s) => s.event)
   const maleL = useLayoutStore((s) => s.layouts.male)
   const femaleL = useLayoutStore((s) => s.layouts.female)
   const maleSeats = useSeatStore((s) => s.seats.male)
   const femaleSeats = useSeatStore((s) => s.seats.female)
-  const patchConfig = useLayoutStore((s) => s.patchConfig)
+  const patchEvent = useLayoutStore((s) => s.patchEvent)
 
-  const scanQrUrl = config?.scan_qr_url ?? ""
+  const scanQrUrl = event?.scan_qr_url ?? ""
 
   const ids = [maleL?.id, femaleL?.id].filter(Boolean) as string[]
   const { isConnected } = useRealtimeSeats(ids)
@@ -74,19 +75,19 @@ export default function DashboardPage() {
 
   const handleScanQrUrlChange = React.useCallback(
     (value: string) => {
-      patchConfig({ scan_qr_url: value })
+      patchEvent({ scan_qr_url: value })
 
       if (timerRef.current) clearTimeout(timerRef.current)
       timerRef.current = setTimeout(async () => {
-        if (!config?.id) return
+        if (!event?.id) return
         const { error } = await supabase
-          .from("config")
+          .from("events")
           .update({ scan_qr_url: value, updated_at: new Date().toISOString() })
-          .eq("id", config.id)
+          .eq("id", event.id)
         if (error) toast.error("Gagal menyimpan Scan QR Url")
       }, 600)
     },
-    [config?.id, patchConfig]
+    [event?.id, patchEvent]
   )
 
   React.useEffect(() => {
@@ -108,25 +109,27 @@ export default function DashboardPage() {
     )
   }
 
+  const base = `/event/${slug}`
+
   return (
     <div className="space-y-6 pb-8">
       <ConnectionBanner isConnected={isConnected} />
 
       <header className="space-y-1">
         <h1 className="font-display text-xl font-bold tracking-tight md:text-2xl">
-          {config?.event_name ?? "Event"}
+          {event?.event_name ?? "Event"}
         </h1>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          {config?.event_date && (
+          {event?.event_date && (
             <span className="inline-flex items-center gap-1.5">
               <CalendarIcon className="size-3.5" />
-              {config.event_date}
+              {event.event_date}
             </span>
           )}
-          {config?.event_venue && (
+          {event?.event_venue && (
             <span className="inline-flex items-center gap-1.5">
               <MapPinIcon className="size-3.5" />
-              {config.event_venue}
+              {event.event_venue}
             </span>
           )}
         </div>
@@ -182,7 +185,7 @@ export default function DashboardPage() {
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/editor"
+          href={`${base}/editor`}
           className={cn(
             buttonVariants({ variant: "default", size: "lg" }),
             "inline-flex gap-2 rounded-md"
@@ -192,7 +195,7 @@ export default function DashboardPage() {
           Edit layout
         </Link>
         <Link
-          href="/check"
+          href={`${base}/check`}
           className={cn(
             buttonVariants({ variant: "secondary", size: "lg" }),
             "inline-flex gap-2 rounded-md"

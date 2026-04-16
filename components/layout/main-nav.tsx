@@ -10,27 +10,41 @@ import {
   LayoutGridIcon,
   LayoutDashboardIcon,
   LogOutIcon,
+  ArrowLeftIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
 
-const items = [
-  { href: "/dashboard", label: "Dasbor", icon: LayoutDashboardIcon },
-  { href: "/editor", label: "Edit", icon: LayoutGridIcon },
-  { href: "/view", label: "Lihat", icon: EyeIcon },
-  { href: "/check", label: "Centang", icon: CheckCircle2Icon },
-  { href: "/participants", label: "Peserta", icon: FileSpreadsheetIcon },
+const navItems = [
+  { path: "dashboard", label: "Dasbor", icon: LayoutDashboardIcon },
+  { path: "editor", label: "Edit", icon: LayoutGridIcon },
+  { path: "view", label: "Lihat", icon: EyeIcon },
+  { path: "check", label: "Centang", icon: CheckCircle2Icon },
+  { path: "participants", label: "Peserta", icon: FileSpreadsheetIcon },
 ] as const
+
+function extractSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/event\/([^/]+)/)
+  return match ? match[1] : null
+}
 
 export function MainNav() {
   const pathname = usePathname()
   const router = useRouter()
+  const slug = extractSlug(pathname)
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
     router.refresh()
   }
+
+  const items = slug
+    ? navItems.map((item) => ({
+        href: `/event/${slug}/${item.path}`,
+        label: item.label,
+        icon: item.icon,
+      }))
+    : []
 
   return (
     <>
@@ -44,11 +58,22 @@ export function MainNav() {
             <p className="text-sm font-semibold text-sidebar-foreground">SeatPlotter</p>
           </div>
         </div>
+
+        {slug && (
+          <Link
+            href="/events"
+            className="mb-4 flex h-8 items-center gap-2 rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-secondary hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-3.5" />
+            Semua Event
+          </Link>
+        )}
+
         <nav className="flex flex-1 flex-col gap-0.5">
           {items.map(({ href, label, icon: Icon }) => {
             const active =
-              href === "/dashboard"
-                ? pathname === "/dashboard"
+              href.endsWith("/dashboard")
+                ? pathname === href
                 : pathname === href || pathname.startsWith(`${href}/`)
             return (
               <Link
@@ -81,8 +106,8 @@ export function MainNav() {
         <div className="mx-auto flex w-full max-w-lg items-stretch justify-between">
           {items.map(({ href, label, icon: Icon }) => {
             const active =
-              href === "/dashboard"
-                ? pathname === "/dashboard"
+              href.endsWith("/dashboard")
+                ? pathname === href
                 : pathname === href || pathname.startsWith(`${href}/`)
             return (
               <Link

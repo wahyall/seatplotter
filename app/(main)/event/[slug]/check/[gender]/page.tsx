@@ -41,13 +41,13 @@ export default function CheckGenderPage() {
 
   const layout = useLayoutStore((s) => s.layouts[gender]);
   const categories = useLayoutStore((s) => s.categories[gender]);
-  const config = useLayoutStore((s) => s.config);
+  const event = useLayoutStore((s) => s.event);
   const seats = useSeatStore(
     useShallow((s) => Object.values(s.seats[gender] ?? {})),
   );
 
   const { isConnected } = useRealtimeSeats(layout?.id);
-  const scanQrUrl = config?.scan_qr_url ?? "";
+  const scanQrUrl = event?.scan_qr_url ?? "";
 
   const [filter, setFilter] = React.useState("all");
   const [withScanQr, setWithScanQr] = React.useState(false);
@@ -394,7 +394,7 @@ export default function CheckGenderPage() {
         </Label>
       </div>
 
-      <StageBar label={config?.stage_label ?? "STAGE"} />
+      <StageBar label={event?.stage_label ?? "STAGE"} />
 
       <SeatGrid
         seats={filteredSeats}

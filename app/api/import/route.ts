@@ -18,26 +18,59 @@ export async function POST(req: Request) {
     )
   }
 
-  const { error: delSeatsErr } = await supabaseAdmin
-    .from("seats")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000")
-  if (delSeatsErr) {
+  const slug = body.slug as string | undefined
+  if (!slug) {
     return Response.json(
-      { success: false, error: delSeatsErr.message },
-      { status: 500 }
+      { success: false, error: "slug is required" },
+      { status: 400 }
     )
   }
 
-  const { error: delCatErr } = await supabaseAdmin
-    .from("categories")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000")
-  if (delCatErr) {
+  const { data: eventRow, error: evErr } = await supabaseAdmin
+    .from("events")
+    .select("id")
+    .eq("slug", slug)
+    .single()
+
+  if (evErr || !eventRow) {
     return Response.json(
-      { success: false, error: delCatErr.message },
-      { status: 500 }
+      { success: false, error: "Event not found" },
+      { status: 404 }
     )
+  }
+
+  const eventId = eventRow.id
+
+  // Get layout IDs for this event to scope deletes
+  const { data: existingLayouts } = await supabaseAdmin
+    .from("layouts")
+    .select("id")
+    .eq("event_id", eventId)
+
+  const existingLayoutIds = (existingLayouts ?? []).map((l) => l.id)
+
+  if (existingLayoutIds.length > 0) {
+    const { error: delSeatsErr } = await supabaseAdmin
+      .from("seats")
+      .delete()
+      .in("layout_id", existingLayoutIds)
+    if (delSeatsErr) {
+      return Response.json(
+        { success: false, error: delSeatsErr.message },
+        { status: 500 }
+      )
+    }
+
+    const { error: delCatErr } = await supabaseAdmin
+      .from("categories")
+      .delete()
+      .in("layout_id", existingLayoutIds)
+    if (delCatErr) {
+      return Response.json(
+        { success: false, error: delCatErr.message },
+        { status: 500 }
+      )
+    }
   }
 
   const layoutIdMap: Record<string, string> = {}
@@ -50,10 +83,11 @@ export async function POST(req: Request) {
       cols: data.cols,
       col_start_char: data.col_start_char,
       reverse_col: data.reverse_col,
+      event_id: eventId,
     }
     const { data: saved, error } = await supabaseAdmin
       .from("layouts")
-      .upsert(row, { onConflict: "gender" })
+      .upsert(row, { onConflict: "event_id,gender" })
       .select()
       .single()
     if (error || !saved) {
@@ -110,10 +144,11 @@ export async function POST(req: Request) {
   }
 
   const { id: _cid, ...configData } = body.config as Record<string, unknown>
+  delete configData.slug
   const { error: cfgErr } = await supabaseAdmin
-    .from("config")
+    .from("events")
     .update(configData)
-    .neq("id", "00000000-0000-0000-0000-000000000000")
+    .eq("id", eventId)
   if (cfgErr) {
     return Response.json(
       { success: false, error: cfgErr.message },

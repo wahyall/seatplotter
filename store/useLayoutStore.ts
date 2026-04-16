@@ -1,14 +1,14 @@
 import { create } from "zustand"
-import type { CategoryRow, ConfigRow, Gender, LayoutRow } from "@/types/db"
+import type { CategoryRow, EventRow, Gender, LayoutRow } from "@/types/db"
 
 export const useLayoutStore = create<{
-  config: ConfigRow | null
+  event: EventRow | null
   layouts: Record<Gender, LayoutRow | null>
   categories: Record<Gender, CategoryRow[]>
   hydrated: boolean
   isExporting: boolean
 
-  setConfig: (c: ConfigRow | null) => void
+  setEvent: (e: EventRow | null) => void
   setLayouts: (male: LayoutRow | null, female: LayoutRow | null) => void
   setCategories: (gender: Gender, list: CategoryRow[]) => void
   addCategory: (gender: Gender, cat: CategoryRow) => void
@@ -16,15 +16,15 @@ export const useLayoutStore = create<{
   removeCategory: (gender: Gender, id: string) => void
   setHydrated: (v: boolean) => void
   setIsExporting: (v: boolean) => void
-  patchConfig: (patch: Partial<ConfigRow>) => void
+  patchEvent: (patch: Partial<EventRow>) => void
 }>((set) => ({
-  config: null,
+  event: null,
   layouts: { male: null, female: null },
   categories: { male: [], female: [] },
   hydrated: false,
   isExporting: false,
 
-  setConfig: (c) => set({ config: c }),
+  setEvent: (e) => set({ event: e }),
 
   setLayouts: (male, female) =>
     set({ layouts: { male, female } }),
@@ -62,8 +62,8 @@ export const useLayoutStore = create<{
 
   setHydrated: (v) => set({ hydrated: v }),
   setIsExporting: (v) => set({ isExporting: v }),
-  patchConfig: (patch) =>
+  patchEvent: (patch) =>
     set((s) => ({
-      config: s.config ? { ...s.config, ...patch } : null,
+      event: s.event ? { ...s.event, ...patch } : null,
     })),
 }))

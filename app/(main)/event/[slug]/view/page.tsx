@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 export default function ViewPage() {
-  const config = useLayoutStore((s) => s.config)
+  const event = useLayoutStore((s) => s.event)
   const isExporting = useLayoutStore((s) => s.isExporting)
   const maleL = useLayoutStore((s) => s.layouts.male)
   const femaleL = useLayoutStore((s) => s.layouts.female)
@@ -85,7 +85,7 @@ export default function ViewPage() {
           onClick={() => {
             useLayoutStore.getState().setIsExporting(true);
             setTimeout(() => {
-              exportLayoutPNG(config?.event_name ?? "event")
+              exportLayoutPNG(event?.event_name ?? "event")
                 .catch((err) => {
                   console.error(err);
                   toast.error("Export gagal")
@@ -145,7 +145,7 @@ export default function ViewPage() {
         )}
       >
         <DualLayoutView
-          stageLabel={config?.stage_label ?? "STAGE"}
+          stageLabel={event?.stage_label ?? "STAGE"}
           maleSeats={maleSeats as SeatWithDim[]}
           femaleSeats={femaleSeats as SeatWithDim[]}
           maleLayout={maleL}

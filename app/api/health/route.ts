@@ -12,7 +12,7 @@ export async function GET() {
     )
   }
   try {
-    const { error } = await supabase.from("config").select("id").limit(1)
+    const { error } = await supabase.from("events").select("id").limit(1)
     if (error) throw error
     return Response.json({
       status: "ok",

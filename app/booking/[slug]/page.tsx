@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import type { Gender } from "@/types/db"
@@ -29,11 +28,11 @@ import {
 } from "lucide-react"
 import { TicketPrint } from "@/components/seat/ticket-print"
 import { exportTicketPNG } from "@/lib/export-png"
+import { eventPrimaryColor, primaryMutedWash } from "@/lib/event-color"
 
 export default function BookingPage() {
-  const router = useRouter()
-
-  const config = useLayoutStore((s) => s.config)
+  const event = useLayoutStore((s) => s.event)
+  const primary = React.useMemo(() => eventPrimaryColor(event), [event])
   const hydrated = useLayoutStore((s) => s.hydrated)
 
   const layoutM = useLayoutStore((s) => s.layouts.male)
@@ -410,12 +409,19 @@ export default function BookingPage() {
   const disableFemaleTab = selectedTicket?.jenis_kelamin === "MALE"
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div
+      className="flex min-h-screen flex-col"
+      style={
+        {
+          "--event-primary": primary,
+        } as React.CSSProperties
+      }
+    >
       <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3">
           <div className="flex-1 min-w-0">
             <h1 className="truncate font-display text-sm font-bold sm:text-base">
-              {config?.event_name ?? "Pilih Kursi"}
+              {event?.event_name ?? "Pilih Kursi"}
             </h1>
             <p className="text-xs text-muted-foreground">
               {stats.available} kursi tersedia &middot; {stats.booked} terisi
@@ -442,7 +448,13 @@ export default function BookingPage() {
             <UserIcon className="size-2.5" /> Terisi
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block size-3 rounded-sm bg-red-200 ring-2 ring-red-400 ring-offset-1 ring-offset-background" />
+            <span
+              className="inline-block size-3 rounded-sm ring-2 ring-offset-1 ring-offset-background"
+              style={{
+                backgroundColor: primaryMutedWash(primary, 35),
+                boxShadow: `0 0 0 2px ${primary}`,
+              }}
+            />
             Kursi Anda
           </span>
           {/* <span className="flex items-center gap-1.5">
@@ -455,6 +467,7 @@ export default function BookingPage() {
         <div className="flex w-full justify-center">
           <div className="inline-flex items-center rounded-md border border-border bg-secondary p-0.5">
             <button
+              type="button"
               onClick={() => {
                 if (disableMaleTab) return
                 setActiveTab("male")
@@ -462,15 +475,21 @@ export default function BookingPage() {
               disabled={disableMaleTab}
               className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 activeTab === "male"
-                  ? "bg-primary text-primary-foreground"
+                  ? "text-white shadow-sm"
                   : disableMaleTab
                     ? "cursor-not-allowed opacity-45 text-muted-foreground"
                     : "text-muted-foreground hover:text-foreground"
               }`}
+              style={
+                activeTab === "male"
+                  ? { backgroundColor: primary }
+                  : undefined
+              }
             >
               Denah PRIA
             </button>
             <button
+              type="button"
               onClick={() => {
                 if (disableFemaleTab) return
                 setActiveTab("female")
@@ -478,11 +497,16 @@ export default function BookingPage() {
               disabled={disableFemaleTab}
               className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 activeTab === "female"
-                  ? "bg-primary text-primary-foreground"
+                  ? "text-white shadow-sm"
                   : disableFemaleTab
                     ? "cursor-not-allowed opacity-45 text-muted-foreground"
                     : "text-muted-foreground hover:text-foreground"
               }`}
+              style={
+                activeTab === "female"
+                  ? { backgroundColor: primary }
+                  : undefined
+              }
             >
               Denah WANITA
             </button>
@@ -525,7 +549,10 @@ export default function BookingPage() {
         {(booking || microLoading) && (
           <div className={`fixed inset-0 z-50 flex items-center justify-center ${booking ? 'bg-background/80 backdrop-blur-sm' : 'bg-transparent'}`}>
             <div className={`flex flex-col items-center gap-3 ${microLoading && !booking ? 'rounded-2xl border border-border/50 bg-background/90 p-6 shadow-xl backdrop-blur-md' : ''}`}>
-              <Loader2Icon className="size-8 animate-spin text-primary" />
+              <Loader2Icon
+                className="size-8 animate-spin"
+                style={{ color: primary }}
+              />
               <p className="text-sm font-medium">{booking ? "Memproses booking..." : "Memproses..."}</p>
             </div>
           </div>
@@ -537,8 +564,10 @@ export default function BookingPage() {
         <div className="mx-auto max-w-[1400px] px-4 py-3">
           {tickets.length === 0 ? (
               <button
+                type="button"
                 onClick={() => setShowScanner(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary/90"
+                className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
+                style={{ backgroundColor: primary }}
               >
               <QrCodeIcon className="size-4" />
               Scan Tiket PDF
@@ -556,21 +585,32 @@ export default function BookingPage() {
                       return (
                         <div key={t.id} className="flex shrink-0 flex-col gap-2">
                           <button
+                            type="button"
                             onClick={() => {
                               const isNowSelected = !isSelected
                               setSelectedTicketId(isNowSelected ? t.id : null)
-                              // Auto-switch tab based on ticket
                               if (isNowSelected) {
                                 setActiveTab(t.jenis_kelamin === "MALE" ? "male" : "female")
                               }
                             }}
                             className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors duration-150 ${
                               isSelected
-                                ? "border-primary bg-primary/10"
-                                : "border-border bg-card hover:border-primary/40"
+                                ? ""
+                                : "border-border bg-card hover:border-[color:var(--event-primary)]"
                             }`}
+                            style={
+                              isSelected
+                                ? {
+                                    borderColor: primary,
+                                    backgroundColor: primaryMutedWash(primary, 12),
+                                  }
+                                : undefined
+                            }
                           >
-                            <TicketIcon className="size-3.5 shrink-0 text-primary" />
+                            <TicketIcon
+                              className="size-3.5 shrink-0"
+                              style={{ color: primary }}
+                            />
                             <div className="min-w-0">
                               <p className="truncate font-medium">{t.nama}</p>
                               <p className="text-[10px] text-muted-foreground">{t.tiket}</p>
@@ -657,7 +697,7 @@ export default function BookingPage() {
                         >
                           <DownloadIcon className="size-3" />
                         </button>
-                        <TicketPrint ticket={t} seatLabel={seatLabel} config={config} authHash={authHashes[t.id]} />
+                        <TicketPrint ticket={t} seatLabel={seatLabel} event={event} authHash={authHashes[t.id]} />
                       </span>
                     )
                   })}
@@ -702,7 +742,10 @@ export default function BookingPage() {
             >
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 font-display text-base font-bold">
-                  <QrCodeIcon className="size-4 text-primary" />
+                  <QrCodeIcon
+                    className="size-4"
+                    style={{ color: primary }}
+                  />
                   Scan Tiket PDF
                 </h2>
                 {tickets.length > 0 && (
@@ -718,14 +761,23 @@ export default function BookingPage() {
               <label
                 htmlFor="scan-pdf-upload"
                 className={`flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed px-6 py-8 transition-colors duration-150 ${
-                  scanning
-                    ? "border-primary/50 bg-primary/5"
-                    : "border-border hover:border-primary/40"
+                  scanning ? "" : "border-border hover:border-[color:var(--event-primary)]"
                 }`}
+                style={
+                  scanning
+                    ? {
+                        borderColor: primaryMutedWash(primary, 55),
+                        backgroundColor: primaryMutedWash(primary, 6),
+                      }
+                    : undefined
+                }
               >
                 {scanning ? (
                   <div className="flex flex-col items-center gap-3">
-                    <ScanLineIcon className="size-10 animate-pulse text-primary" />
+                    <ScanLineIcon
+                      className="size-10 animate-pulse"
+                      style={{ color: primary }}
+                    />
                     <p className="text-sm font-medium">Scanning...</p>
                     {scanProgress && (
                       <p className="text-xs text-muted-foreground">

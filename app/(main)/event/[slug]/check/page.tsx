@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useLayoutStore } from "@/store/useLayoutStore"
 import { useSeatStore } from "@/store/useSeatStore"
 import { useShallow } from "zustand/react/shallow"
@@ -36,6 +37,7 @@ function useStats(gender: "male" | "female") {
 }
 
 export default function CheckLandingPage() {
+  const { slug } = useParams<{ slug: string }>()
   const maleL = useLayoutStore((s) => s.layouts.male)
   const femaleL = useLayoutStore((s) => s.layouts.female)
   const ids = [maleL?.id, femaleL?.id].filter(Boolean) as string[]
@@ -43,6 +45,8 @@ export default function CheckLandingPage() {
 
   const maleStats = useStats("male")
   const femaleStats = useStats("female")
+
+  const base = `/event/${slug}`
 
   return (
     <div className="space-y-6 pb-8">
@@ -55,7 +59,7 @@ export default function CheckLandingPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Link href="/check/male">
+        <Link href={`${base}/check/male`}>
           <div className="cursor-pointer rounded-md border border-primary/20 bg-card p-4 transition-colors duration-150 hover:border-primary/40">
             <div className="flex items-center gap-2 text-base font-semibold">
               <MarsIcon className="size-5 text-primary" />
@@ -71,7 +75,7 @@ export default function CheckLandingPage() {
           </div>
         </Link>
 
-        <Link href="/check/female">
+        <Link href={`${base}/check/female`}>
           <div className="cursor-pointer rounded-md border border-rose-500/20 bg-card p-4 transition-colors duration-150 hover:border-rose-500/40">
             <div className="flex items-center gap-2 text-base font-semibold">
               <VenusIcon className="size-5 text-rose-400" />

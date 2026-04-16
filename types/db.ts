@@ -1,17 +1,24 @@
 export type Gender = "male" | "female"
 
-export interface ConfigRow {
+export interface EventRow {
   id: string
+  slug: string
   event_name: string
   event_date: string | null
   event_venue: string | null
   stage_label: string
   scan_qr_url: string
+  /** Primary brand color (hex or any valid CSS color) */
+  color: string
   updated_at: string
 }
 
+/** @deprecated Use EventRow instead */
+export type ConfigRow = EventRow
+
 export interface LayoutRow {
   id: string
+  event_id: string
   gender: Gender
   label: string
   rows: number
@@ -51,6 +58,7 @@ export type SeatWithDim = SeatRow & { _dimmed?: boolean }
 
 export interface ParticipantRow {
   id: string
+  event_id: string
   nama: string
   email: string
   jenis_kelamin: string

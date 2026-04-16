@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ValidatedTicket } from "@/lib/booking";
-import { ConfigRow } from "@/types/db";
+import { EventRow } from "@/types/db";
+import { eventPrimaryColor } from "@/lib/event-color";
 import { TicketIcon } from "lucide-react";
 import {
   generateGuillochePaths,
@@ -11,7 +12,7 @@ import {
 interface TicketPrintProps {
   ticket: ValidatedTicket;
   seatLabel: string;
-  config: ConfigRow | null;
+  event: EventRow | null;
   authHash?: string | null;
 }
 
@@ -132,20 +133,35 @@ function GuillocheOverlay({ hash, nama }: { hash: string; nama: string }) {
   );
 }
 
-function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
+function seatGradientAccent(accent: string) {
+  return `linear-gradient(color-mix(in srgb, ${accent} 40%, transparent), color-mix(in srgb, ${accent} 20%, transparent)), url('/ticket.png')`;
+}
+
+function SeatGuard({
+  hash,
+  seatLabel,
+  accent,
+}: {
+  hash: string;
+  seatLabel: string;
+  accent: string;
+}) {
   const curves = React.useMemo(
     () => generateGuillochePaths(hash, 120, 56),
     [hash],
   );
+  const grad = seatGradientAccent(accent);
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <div className="bg-white text-red-500 font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
+      <div
+        className="bg-white font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden"
+        style={{ color: accent }}
+      >
         <span
           className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block mr-2"
           style={{
-            backgroundImage:
-              "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+            backgroundImage: grad,
             backgroundSize: "cover",
             backgroundPosition: "top center",
             backgroundRepeat: "no-repeat",
@@ -156,8 +172,7 @@ function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
         <span
           className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block"
           style={{
-            backgroundImage:
-              "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+            backgroundImage: grad,
             backgroundSize: "cover",
             backgroundPosition: "top center",
             backgroundRepeat: "no-repeat",
@@ -263,9 +278,12 @@ function IdenticonBlock({ hash }: { hash: string }) {
 export function TicketPrint({
   ticket,
   seatLabel,
-  config,
+  event,
   authHash,
 }: TicketPrintProps) {
+  const accent = eventPrimaryColor(event);
+  const headerAccentLine = `linear-gradient(to right, transparent, color-mix(in srgb, ${accent} 50%, transparent), transparent)`;
+
   return (
     <div className="absolute w-0 h-0 overflow-hidden pointer-events-none">
       <div
@@ -289,15 +307,28 @@ export function TicketPrint({
           />
           {/* Dark overlay for legibility */}
           <div className="absolute inset-0 bg-black/80" />
-          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent z-10" />
+          <div
+            className="absolute inset-x-0 top-0 h-px z-10"
+            style={{ background: headerAccentLine }}
+          />
 
-          <TicketIcon className="size-10 text-red-400 mb-4 relative z-10" />
+          <TicketIcon
+            className="size-10 mb-4 relative z-10"
+            style={{ color: accent }}
+          />
 
           <h2 className="text-white text-lg font-bold text-center leading-snug mb-3 uppercase tracking-wide px-2 relative z-10">
-            {config?.event_name || "Event Ticket"}
+            {event?.event_name || "Event Ticket"}
           </h2>
 
-          <div className="bg-[#0c0c0f]/80 text-red-400 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-[0.2em] border border-red-500/20 uppercase relative z-10">
+          <div
+            className="bg-[#0c0c0f]/80 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-[0.2em] border uppercase relative z-10"
+            style={{
+              color: accent,
+              borderColor: `color-mix(in srgb, ${accent} 35%, transparent)`,
+              backgroundColor: `color-mix(in srgb, ${accent} 12%, #0c0c0f)`,
+            }}
+          >
             {ticket.tiket} •{" "}
             {ticket.jenis_kelamin === "MALE" ? "PRIA" : "WANITA"}
           </div>
@@ -333,14 +364,16 @@ export function TicketPrint({
                 NOMOR KURSI
               </p>
               {authHash ? (
-                <SeatGuard hash={authHash} seatLabel={seatLabel} />
+                <SeatGuard hash={authHash} seatLabel={seatLabel} accent={accent} />
               ) : (
-                <div className="bg-white text-red-500 font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
+                <div
+                  className="bg-white font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden"
+                  style={{ color: accent }}
+                >
                   <span
                     className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block mr-2"
                     style={{
-                      backgroundImage:
-                        "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+                      backgroundImage: seatGradientAccent(accent),
                       backgroundSize: "cover",
                       backgroundPosition: "top center",
                       backgroundRepeat: "no-repeat",
@@ -351,8 +384,7 @@ export function TicketPrint({
                   <span
                     className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block"
                     style={{
-                      backgroundImage:
-                        "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+                      backgroundImage: seatGradientAccent(accent),
                       backgroundSize: "cover",
                       backgroundPosition: "top center",
                       backgroundRepeat: "no-repeat",
