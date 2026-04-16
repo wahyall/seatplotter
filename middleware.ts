@@ -1,12 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const session = request.cookies.get("session")
-  const { pathname } = request.nextUrl
+  const session = request.cookies.get("session");
+  const { pathname } = request.nextUrl;
 
   // Public paths that don't need authentication
-  const publicPaths = ["/login", "/api/auth", "/booking", "/api/booking"]
-  const isPublicPath = publicPaths.some((p) => pathname.startsWith(p))
+  const publicPaths = [
+    "/login",
+    "/api/auth",
+    "/booking",
+    "/api/booking",
+    "/api/ticket",
+  ];
+  const isPublicPath = publicPaths.some((p) => pathname.startsWith(p));
 
   // Static files and API paths other than protected ones
   if (
@@ -17,27 +23,27 @@ export function middleware(request: NextRequest) {
     pathname.endsWith(".svg") ||
     pathname.endsWith(".ico")
   ) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
   // Allow public paths
   if (isPublicPath) {
     // If already logged in and visiting /login, redirect to dashboard
     if (pathname === "/login" && session?.value) {
-      return NextResponse.redirect(new URL("/dashboard", request.url))
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
   // Protected routes: everything under (main) group — dashboard, editor, check, participants
   // Also protect the root "/" which redirects to /dashboard
   if (!session?.value) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("redirect", pathname)
-    return NextResponse.redirect(loginUrl)
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
@@ -50,4 +56,4 @@ export const config = {
      */
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
-}
+};
