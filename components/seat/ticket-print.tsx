@@ -102,13 +102,18 @@ function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
   return (
     <div className="relative inline-flex items-center justify-center">
       <div className="bg-red-500 text-white font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
-        <img
-          src="/ticket.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute top-0 left-0 w-full h-full object-cover opacity-20 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)] z-20"
-        />
-        <span className="relative z-10">{seatLabel.replace("_", " ")}</span>
+        <span
+          className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url('/ticket.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {seatLabel.replace("_", " ")}
+        </span>
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none z-30"
           xmlns="http://www.w3.org/2000/svg"
@@ -248,13 +253,18 @@ export function TicketPrint({ ticket, seatLabel, config, authHash }: TicketPrint
                 <SeatGuard hash={authHash} seatLabel={seatLabel} />
               ) : (
                 <div className="bg-red-500 text-white font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
-                  <img
-                    src="/ticket.png"
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute top-0 left-0 w-full h-full object-cover opacity-20 drop-shadow-[0_3px_10px_rgba(0,0,0,0.35)] z-20"
-                  />
-                  <span className="relative z-10">{seatLabel.replace("_", " ")}</span>
+                  <span
+                    className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url('/ticket.png')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                    }}
+                  >
+                    {seatLabel.replace("_", " ")}
+                  </span>
                 </div>
               )}
             </div>
