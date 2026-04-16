@@ -140,12 +140,12 @@ function SeatGuard({ hash, seatLabel }: { hash: string; seatLabel: string }) {
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <div className="bg-white text-red-500 font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
+      <div className="bg-[#DC1205] text-black font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
         <span
           className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+              "linear-gradient(rgba(220,18,5,0.1), rgba(220,18,5,0.1)), url('/ticket.png')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
@@ -323,12 +323,12 @@ export function TicketPrint({
               {authHash ? (
                 <SeatGuard hash={authHash} seatLabel={seatLabel} />
               ) : (
-                <div className="bg-white text-red-500 font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
+                <div className="bg-[#DC1205] text-black font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden">
                   <span
                     className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]"
                     style={{
                       backgroundImage:
-                        "linear-gradient(rgba(220,18,5,0.4), rgba(220,18,5,0.2)), url('/ticket.png')",
+                        "linear-gradient(rgba(220,18,5,0.1), rgba(220,18,5,0.1)), url('/ticket.png')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       backgroundRepeat: "no-repeat",
