@@ -73,13 +73,13 @@ export function DualLayoutView({
         {showMale && (
           <section
             className={cn(
-              "flex flex-col rounded-md border border-blue-500/20 p-3",
+              "flex flex-col rounded-md border border-primary/20 p-3",
               singleColumn
                 ? "w-full max-w-2xl flex-1"
                 : "min-w-[min(100%,380px)] flex-1"
             )}
           >
-            <h3 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-blue-400">
+            <h3 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-primary">
               Pria
             </h3>
             <SeatGrid
@@ -100,13 +100,13 @@ export function DualLayoutView({
         {showFemale && (
           <section
             className={cn(
-              "flex flex-col rounded-md border border-pink-500/20 p-3",
+              "flex flex-col rounded-md border border-rose-500/20 p-3",
               singleColumn
                 ? "w-full max-w-2xl flex-1"
                 : "min-w-[min(100%,380px)] flex-1"
             )}
           >
-            <h3 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-pink-400">
+            <h3 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-rose-400">
               Wanita
             </h3>
             <SeatGrid

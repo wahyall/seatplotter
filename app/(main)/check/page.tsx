@@ -56,9 +56,9 @@ export default function CheckLandingPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Link href="/check/male">
-          <div className="cursor-pointer rounded-md border border-blue-500/20 bg-card p-4 transition-colors duration-150 hover:border-blue-500/40">
+          <div className="cursor-pointer rounded-md border border-primary/20 bg-card p-4 transition-colors duration-150 hover:border-primary/40">
             <div className="flex items-center gap-2 text-base font-semibold">
-              <MarsIcon className="size-5 text-blue-400" />
+              <MarsIcon className="size-5 text-primary" />
               Pria
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -72,9 +72,9 @@ export default function CheckLandingPage() {
         </Link>
 
         <Link href="/check/female">
-          <div className="cursor-pointer rounded-md border border-pink-500/20 bg-card p-4 transition-colors duration-150 hover:border-pink-500/40">
+          <div className="cursor-pointer rounded-md border border-rose-500/20 bg-card p-4 transition-colors duration-150 hover:border-rose-500/40">
             <div className="flex items-center gap-2 text-base font-semibold">
-              <VenusIcon className="size-5 text-pink-400" />
+              <VenusIcon className="size-5 text-rose-400" />
               Wanita
             </div>
             <p className="mt-1 text-xs text-muted-foreground">

@@ -698,10 +698,10 @@ export default function ImportParticipantsPage() {
                                 "text-[10px]",
                                 p.jenis_kelamin.toUpperCase() === "MALE" ||
                                   p.jenis_kelamin.toUpperCase() === "LAKI-LAKI"
-                                  ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
+                                  ? "border-primary/30 bg-primary/10 text-primary"
                                   : p.jenis_kelamin.toUpperCase() === "FEMALE" ||
                                     p.jenis_kelamin.toUpperCase() === "PEREMPUAN"
-                                  ? "border-pink-500/30 bg-pink-500/10 text-pink-400"
+                                  ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
                                   : ""
                               )}
                             >

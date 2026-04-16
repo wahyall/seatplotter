@@ -135,7 +135,7 @@ function SeatCellInner({
         checkedStyle,
         animating && "animate-seat-pulse",
         booked && !mine && "cursor-not-allowed opacity-40",
-        mine && "ring-2 ring-blue-500 ring-offset-1 ring-offset-background"
+        mine && "ring-2 ring-red-500 ring-offset-1 ring-offset-background"
       )}
       onClick={() => onAction(seat.id, "click")}
       onTouchStart={(e) => {
@@ -168,7 +168,7 @@ function SeatCellInner({
       )}
       {/* Booking mode: my seat */}
       {mine && (
-        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-blue-200/80 ring-2 ring-blue-400 ring-offset-1 ring-offset-background">
+        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-red-200/80 ring-2 ring-red-400 ring-offset-1 ring-offset-background">
           <span className="text-[12px] font-black text-slate-800 drop-shadow-md tracking-tighter" style={{ lineHeight: 1 }}>
             {seat._mineInitial?.substring(0, 2) ?? "✓"}
           </span>

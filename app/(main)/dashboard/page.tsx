@@ -215,7 +215,7 @@ function GenderStatsCard({
   color: "blue" | "pink"
   stats: { total: number; checked: number; goodieBag: number; checkPct: number; goodiePct: number }
 }) {
-  const borderColor = color === "blue" ? "border-blue-500/20" : "border-pink-500/20"
+  const borderColor = color === "blue" ? "border-primary/20" : "border-rose-500/20"
 
   return (
     <div className={cn("rounded-md border bg-card p-4", borderColor)}>

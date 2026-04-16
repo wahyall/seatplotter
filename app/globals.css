@@ -3,36 +3,36 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* SeatPlotter — dark-first, clean blue accent */
+/* SeatPlotter — dark noir, crimson red accent */
 :root {
   --radius: 0.5rem;
-  --background: hsl(228 12% 7%);
-  --foreground: hsl(210 20% 95%);
-  --card: hsl(228 10% 10%);
-  --card-foreground: hsl(210 20% 95%);
-  --popover: hsl(228 10% 11%);
-  --popover-foreground: hsl(210 20% 95%);
-  --primary: hsl(217 70% 55%);
+  --background: hsl(0 0% 4%);
+  --foreground: hsl(0 0% 95%);
+  --card: hsl(0 0% 7%);
+  --card-foreground: hsl(0 0% 95%);
+  --popover: hsl(0 0% 8%);
+  --popover-foreground: hsl(0 0% 95%);
+  --primary: hsl(3 91% 46%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(228 8% 15%);
-  --secondary-foreground: hsl(210 20% 95%);
-  --muted: hsl(228 8% 17%);
-  --muted-foreground: hsl(228 8% 52%);
-  --accent: hsl(217 25% 18%);
-  --accent-foreground: hsl(217 80% 92%);
+  --secondary: hsl(0 3% 12%);
+  --secondary-foreground: hsl(0 0% 95%);
+  --muted: hsl(0 2% 14%);
+  --muted-foreground: hsl(0 2% 52%);
+  --accent: hsl(3 40% 14%);
+  --accent-foreground: hsl(3 80% 90%);
   --destructive: hsl(0 68% 50%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(228 8% 16%);
-  --input: hsl(228 8% 16%);
-  --ring: hsl(217 70% 55%);
-  --chart-1: hsl(217 70% 55%);
+  --border: hsl(0 3% 14%);
+  --input: hsl(0 3% 14%);
+  --ring: hsl(3 91% 46%);
+  --chart-1: hsl(3 91% 46%);
   --chart-2: hsl(162 60% 45%);
   --chart-3: hsl(40 85% 55%);
   --chart-4: hsl(340 65% 55%);
   --chart-5: hsl(280 50% 55%);
-  --sidebar: hsl(228 12% 8%);
-  --sidebar-foreground: hsl(210 15% 90%);
-  --sidebar-border: hsl(228 8% 14%);
+  --sidebar: hsl(0 0% 5%);
+  --sidebar-foreground: hsl(0 0% 90%);
+  --sidebar-border: hsl(0 3% 12%);
 }
 
 @theme inline {
@@ -85,13 +85,13 @@
 /* Realtime pulse on seats */
 @keyframes seat-pulse {
   0% {
-    box-shadow: 0 0 0 0 hsl(217 70% 55% / 0.6);
+    box-shadow: 0 0 0 0 hsl(3 91% 46% / 0.6);
   }
   70% {
-    box-shadow: 0 0 0 10px hsl(217 70% 55% / 0);
+    box-shadow: 0 0 0 10px hsl(3 91% 46% / 0);
   }
   100% {
-    box-shadow: 0 0 0 0 hsl(217 70% 55% / 0);
+    box-shadow: 0 0 0 0 hsl(3 91% 46% / 0);
   }
 }
 
@@ -101,5 +101,5 @@
 
 /* Export region for html2canvas */
 #export-layout {
-  background: hsl(228 12% 7%);
+  background: hsl(0 0% 4%);
 }

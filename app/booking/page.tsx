@@ -437,7 +437,7 @@ export default function BookingPage() {
             <UserIcon className="size-2.5" /> Terisi
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block size-3 rounded-sm bg-blue-200 ring-2 ring-blue-400 ring-offset-1 ring-offset-background" />
+            <span className="inline-block size-3 rounded-sm bg-red-200 ring-2 ring-red-400 ring-offset-1 ring-offset-background" />
             Kursi Anda
           </span>
           {/* <span className="flex items-center gap-1.5">

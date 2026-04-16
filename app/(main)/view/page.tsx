@@ -109,7 +109,7 @@ export default function ViewPage() {
             size="sm"
             className={cn(
               "rounded-[3px] px-4",
-              viewGender === "male" && "bg-card text-blue-400"
+              viewGender === "male" && "bg-card text-primary"
             )}
             onClick={() => setViewGender("male")}
           >
@@ -121,7 +121,7 @@ export default function ViewPage() {
             size="sm"
             className={cn(
               "rounded-[3px] px-4",
-              viewGender === "female" && "bg-card text-pink-400"
+              viewGender === "female" && "bg-card text-rose-400"
             )}
             onClick={() => setViewGender("female")}
           >
