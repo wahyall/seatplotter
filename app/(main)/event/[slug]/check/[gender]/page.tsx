@@ -121,98 +121,94 @@ export default function CheckGenderPage() {
 
   handleSeatRef.current = async (seatId: string, action: string) => {
     if (action !== "click") return;
-    const seat = useSeatStore.getState().seats[gender][seatId];
+    const seatStore = useSeatStore.getState();
+    const seat = seatStore.seats[gender][seatId];
     if (!seat || seat.is_empty) return;
     if (filter !== "all" && seat.category_id !== filter) return;
 
-    // If scan QR mode is enabled and seat is not yet checked, open modal
-    if (
-      withScanQr &&
-      scanQrUrl &&
-      !seat.is_checked &&
-      !seat.participant_id &&
-      pageMode === "check"
-    ) {
-      setQrModalSeatId(seatId);
-      return;
-    }
+    const clearSeatParticipant = async () => {
+      if (!seat.participant_id) return;
+      if (
+        !confirm(
+          `Yakin ingin mengosongkan kursi ini (Peserta: ${seat.participants?.nama ?? "Tanpa Nama"})?`,
+        )
+      ) {
+        return;
+      }
+      const { error } = await supabase
+        .from("seats")
+        .update({
+          participant_id: null,
+          is_checked: false,
+          checked_at: null,
+          is_goodie_bag: false,
+          goodie_bag_at: null,
+        })
+        .eq("id", seatId);
+      const { error: participantError } = await supabase
+        .from("participants")
+        .update({
+          seat_id: null,
+        })
+        .eq("id", seat.participant_id);
+      if (!error && !participantError) {
+        toast.success("Kursi berhasil dikosongkan");
+        useSeatStore.getState().updateSeatLocal(seatId, gender, {
+          participant_id: null,
+          is_checked: false,
+          checked_at: null,
+          is_goodie_bag: false,
+          goodie_bag_at: null,
+          participants: null,
+        });
+      } else {
+        toast.error("Gagal mengosongkan kursi");
+      }
+    };
+
+    const openParticipantInfo = () => {
+      if (!seat.participant_id) return;
+      setParticipantInfoSeatId(seatId);
+      if (!seat.participants) {
+        setLoadingParticipant(true);
+        supabase
+          .from("participants")
+          .select("*")
+          .eq("id", seat.participant_id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              useSeatStore
+                .getState()
+                .updateSeatLocal(seatId, gender, { participants: data });
+            }
+            setLoadingParticipant(false);
+          });
+      }
+    };
 
     if (pageMode === "check") {
-      if (seat.is_checked && !removeSeatMode && !seat.participant_id) {
+      if (
+        withScanQr &&
+        scanQrUrl &&
+        !seat.is_checked &&
+        !seat.participant_id
+      ) {
+        setQrModalSeatId(seatId);
         return;
       }
-    } else if (pageMode === "goodie_bag") {
-      if (seat.is_goodie_bag && !removeSeatMode) {
-        return;
-      }
-    }
 
-    // if (seat.participant_id && !removeSeatMode && pageMode === "check") {
-    //   return;
-    // }
-
-    if (seat.participant_id) {
-      if (removeSeatMode) {
-        if (
-          confirm(
-            `Yakin ingin mengosongkan kursi ini (Peserta: ${seat.participants?.nama ?? "Tanpa Nama"})?`,
-          )
-        ) {
-          const { error } = await supabase
-            .from("seats")
-            .update({
-              participant_id: null,
-              is_checked: false,
-              checked_at: null,
-              is_goodie_bag: false,
-              goodie_bag_at: null,
-            })
-            .eq("id", seatId);
-          const { error: participantError } = await supabase
-            .from("participants")
-            .update({
-              seat_id: null,
-            })
-            .eq("id", seat.participant_id);
-          if (!error && !participantError) {
-            toast.success("Kursi berhasil dikosongkan");
-            useSeatStore.getState().updateSeatLocal(seatId, gender, {
-              participant_id: null,
-              is_checked: false,
-              checked_at: null,
-              is_goodie_bag: false,
-              goodie_bag_at: null,
-              participants: null,
-            });
-          } else {
-            toast.error("Gagal mengosongkan kursi");
-          }
-        }
-        return;
-      } else if (pageMode !== "hadir") {
-        setParticipantInfoSeatId(seatId);
-        if (!seat.participants) {
-          setLoadingParticipant(true);
-          supabase
-            .from("participants")
-            .select("*")
-            .eq("id", seat.participant_id)
-            .maybeSingle()
-            .then(({ data }) => {
-              if (data) {
-                useSeatStore
-                  .getState()
-                  .updateSeatLocal(seatId, gender, { participants: data });
-              }
-              setLoadingParticipant(false);
-            });
+      if (seat.participant_id) {
+        if (removeSeatMode) {
+          await clearSeatParticipant();
+        } else {
+          openParticipantInfo();
         }
         return;
       }
-    }
 
-    // Normal toggle logic
-    if (pageMode === "check") {
+      if (seat.is_checked && !removeSeatMode) return;
+
       const next = !seat.is_checked;
       try {
         await persistCheck(gender, seatId, next);
@@ -223,7 +219,17 @@ export default function CheckGenderPage() {
           checked_at: null,
         });
       }
-    } else if (pageMode === "goodie_bag") {
+      return;
+    }
+
+    if (pageMode === "goodie_bag") {
+      if (seat.participant_id && removeSeatMode) {
+        await clearSeatParticipant();
+        return;
+      }
+
+      if (seat.is_goodie_bag && !removeSeatMode) return;
+
       const next = !seat.is_goodie_bag;
       try {
         await persistGoodieBag(gender, seatId, next);
@@ -237,18 +243,24 @@ export default function CheckGenderPage() {
           goodie_bag_at: null,
         });
       }
-    } else {
-      if (seat.is_checked) return;
-      try {
-        await persistCheck(gender, seatId, true);
-        toast.success("Berhasil ditandai hadir");
-      } catch {
-        toast.error("Gagal update kehadiran");
-        useSeatStore.getState().updateSeatLocal(seatId, gender, {
-          is_checked: false,
-          checked_at: null,
-        });
-      }
+      return;
+    }
+
+    if (seat.participant_id && removeSeatMode) {
+      await clearSeatParticipant();
+      return;
+    }
+
+    if (seat.is_checked) return;
+    try {
+      await persistCheck(gender, seatId, true);
+      toast.success("Berhasil ditandai hadir");
+    } catch {
+      toast.error("Gagal update kehadiran");
+      useSeatStore.getState().updateSeatLocal(seatId, gender, {
+        is_checked: false,
+        checked_at: null,
+      });
     }
   };
 
