@@ -423,7 +423,7 @@ export default function CheckGenderPage() {
         />
       </div>
 
-      {scanQrUrl && pageMode === "check" && (
+      {/* {scanQrUrl && pageMode === "hadir" && (
         <div className="flex items-center gap-2">
           <Checkbox
             id="with-scan-qr"
@@ -438,7 +438,7 @@ export default function CheckGenderPage() {
             Dengan Scan QR
           </Label>
         </div>
-      )}
+      )} */}
 
       <div className="flex items-center space-x-2 rounded-lg">
         <Checkbox
