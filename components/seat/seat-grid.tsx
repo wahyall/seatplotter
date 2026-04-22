@@ -77,7 +77,7 @@ export function SeatGrid({
   return (
     <div
       className={cn(
-        "flex min-h-0 flex-1 flex-col [--seat-size:34px] lg:[--seat-size:42px]",
+        "flex min-h-0 flex-1 flex-col [--seat-size:38px] lg:[--seat-size:42px]",
         compact && "[--seat-size:34px]",
         className
       )}
