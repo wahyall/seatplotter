@@ -4,6 +4,7 @@ import * as React from "react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
 import type { ParticipantRow } from "@/types/db"
+import { downloadParticipantQrPdf } from "@/lib/participant-qr-pdf"
 import { useLayoutStore } from "@/store/useLayoutStore"
 import {
   Card,
@@ -44,6 +45,8 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  QrCodeIcon,
+  Loader2Icon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -127,6 +130,8 @@ function autoMap(headers: string[]): ColumnMapping {
 export default function ImportParticipantsPage() {
   const event = useLayoutStore((s) => s.event)
   const eventId = event?.id ?? ""
+  const eventTitle = event?.event_name ?? ""
+
   const [file, setFile] = React.useState<File | null>(null)
   const [headers, setHeaders] = React.useState<string[]>([])
   const [rawRows, setRawRows] = React.useState<Record<string, string>[]>([])
@@ -156,6 +161,21 @@ export default function ImportParticipantsPage() {
   const [totalAll, setTotalAll] = React.useState(0)
   const [ticketTypes, setTicketTypes] = React.useState<string[]>([])
   const [stats, setStats] = React.useState<Record<string, number>>({})
+  const [pdfLoadingId, setPdfLoadingId] = React.useState<string | null>(null)
+
+  async function handleDownloadQrPdf(p: ParticipantRow) {
+    setPdfLoadingId(p.id)
+    try {
+      await downloadParticipantQrPdf(p, {
+        eventTitle: eventTitle || undefined,
+      })
+      toast.success("PDF berhasil diunduh")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membuat PDF")
+    } finally {
+      setPdfLoadingId(null)
+    }
+  }
 
   // debounce search
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
@@ -682,6 +702,9 @@ export default function ImportParticipantsPage() {
                       <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
                         Kode Tiket
                       </th>
+                      <th className="px-3 py-2.5 text-right font-medium text-muted-foreground">
+                        Aksi
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -733,6 +756,30 @@ export default function ImportParticipantsPage() {
                         </td>
                         <td className="px-3 py-2 font-mono text-[10px] tracking-wider">
                           {p.kode_tiket || "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 px-2 text-[11px]"
+                            disabled={
+                              !p.kode_tiket?.trim() || pdfLoadingId === p.id
+                            }
+                            onClick={() => handleDownloadQrPdf(p)}
+                            title={
+                              p.kode_tiket?.trim()
+                                ? "Unduh PDF berisi QR kode tiket"
+                                : "Perlu kode tiket untuk QR"
+                            }
+                          >
+                            {pdfLoadingId === p.id ? (
+                              <Loader2Icon className="size-3.5 animate-spin" />
+                            ) : (
+                              <QrCodeIcon className="size-3.5" />
+                            )}
+                            PDF QR
+                          </Button>
                         </td>
                       </tr>
                     ))}

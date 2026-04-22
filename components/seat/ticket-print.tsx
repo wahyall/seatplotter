@@ -180,7 +180,7 @@ function SeatGuard({
         >
           {seatLabel.split("_")[1]}
         </span>
-        <svg
+        {/* <svg
           className="absolute inset-0 w-full h-full pointer-events-none z-30"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
@@ -237,7 +237,7 @@ function SeatGuard({
               strokeWidth={c.strokeWidth * 0.8}
             />
           ))}
-        </svg>
+        </svg> */}
       </div>
     </div>
   );
@@ -322,7 +322,7 @@ export function TicketPrint({
           </h2>
 
           <div
-            className="bg-[#0c0c0f]/80 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-[0.2em] border uppercase relative z-10"
+            className="bg-[#0c0c0f]/60 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-[0.2em] border uppercase relative z-10"
             style={{
               color: accent,
               borderColor: `color-mix(in srgb, ${accent} 35%, transparent)`,
@@ -364,7 +364,11 @@ export function TicketPrint({
                 NOMOR KURSI
               </p>
               {authHash ? (
-                <SeatGuard hash={authHash} seatLabel={seatLabel} accent={accent} />
+                <SeatGuard
+                  hash={authHash}
+                  seatLabel={seatLabel}
+                  accent={accent}
+                />
               ) : (
                 <div
                   className="bg-white font-black text-4xl px-4 py-1 rounded-xl relative overflow-hidden"
