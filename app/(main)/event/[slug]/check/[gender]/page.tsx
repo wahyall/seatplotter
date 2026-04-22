@@ -188,6 +188,13 @@ export default function CheckGenderPage() {
     };
 
     if (pageMode === "check") {
+      if (removeSeatMode) {
+        if (seat.participant_id) {
+          await clearSeatParticipant();
+        }
+        return;
+      }
+
       if (
         withScanQr &&
         scanQrUrl &&
@@ -199,15 +206,11 @@ export default function CheckGenderPage() {
       }
 
       if (seat.participant_id) {
-        if (removeSeatMode) {
-          await clearSeatParticipant();
-        } else {
-          openParticipantInfo();
-        }
+        openParticipantInfo();
         return;
       }
 
-      if (seat.is_checked && !removeSeatMode) return;
+      if (seat.is_checked) return;
 
       const next = !seat.is_checked;
       try {
@@ -223,12 +226,22 @@ export default function CheckGenderPage() {
     }
 
     if (pageMode === "goodie_bag") {
-      if (seat.participant_id && removeSeatMode) {
-        await clearSeatParticipant();
+      if (removeSeatMode) {
+        if (!seat.is_goodie_bag) return;
+        try {
+          await persistGoodieBag(gender, seatId, false);
+          toast.success("Goodie Bag dibatalkan");
+        } catch {
+          toast.error("Gagal batal Goodie Bag");
+          useSeatStore.getState().updateSeatLocal(seatId, gender, {
+            is_goodie_bag: true,
+            goodie_bag_at: seat.goodie_bag_at ?? new Date().toISOString(),
+          });
+        }
         return;
       }
 
-      if (seat.is_goodie_bag && !removeSeatMode) return;
+      if (seat.is_goodie_bag) return;
 
       const next = !seat.is_goodie_bag;
       try {
@@ -246,8 +259,18 @@ export default function CheckGenderPage() {
       return;
     }
 
-    if (seat.participant_id && removeSeatMode) {
-      await clearSeatParticipant();
+    if (removeSeatMode) {
+      if (!seat.is_checked) return;
+      try {
+        await persistCheck(gender, seatId, false);
+        toast.success("Status hadir dibatalkan");
+      } catch {
+        toast.error("Gagal membatalkan status hadir");
+        useSeatStore.getState().updateSeatLocal(seatId, gender, {
+          is_checked: true,
+          checked_at: seat.checked_at ?? new Date().toISOString(),
+        });
+      }
       return;
     }
 
