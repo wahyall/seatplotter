@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
+import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import type { Gender } from "@/types/db"
 import { useLayoutStore } from "@/store/useLayoutStore"
@@ -31,6 +32,16 @@ import { exportTicketPNG } from "@/lib/export-png"
 import { eventPrimaryColor, primaryMutedWash } from "@/lib/event-color"
 
 export default function BookingPage() {
+  const params = useParams<{ slug?: string | string[] }>()
+  const pageSlug = React.useMemo(() => {
+    const rawSlug = params?.slug
+    if (Array.isArray(rawSlug)) return rawSlug[0] ?? ""
+    return rawSlug ?? ""
+  }, [params])
+  const bannerUrl = pageSlug ? `/banners/${pageSlug}.jpg` : null
+  const { scrollY } = useScroll()
+  const bannerY = useTransform(scrollY, [0, 900], [0, 180])
+
   const event = useLayoutStore((s) => s.event)
   const primary = React.useMemo(() => eventPrimaryColor(event), [event])
   const hydrated = useLayoutStore((s) => s.hydrated)
@@ -421,13 +432,25 @@ export default function BookingPage() {
 
   return (
     <div
-      className="flex min-h-screen flex-col"
+      className="relative flex min-h-screen flex-col"
       style={
         {
           "--event-primary": primary,
         } as React.CSSProperties
       }
     >
+      {bannerUrl && (
+        <div className="sticky top-0 z-0 h-[220px] w-full overflow-hidden border-b border-border bg-card">
+          <motion.img
+            src={bannerUrl}
+            alt={`${pageSlug} banner`}
+            className="h-[280px] w-full object-cover will-change-transform"
+            style={{ y: bannerY }}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/20 via-background/35 to-background/80" />
+        </div>
+      )}
+
       <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3">
           <div className="flex-1 min-w-0">
