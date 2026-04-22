@@ -56,7 +56,7 @@ export function MainNav() {
           </div>
           <div className="leading-tight">
             <p className="text-sm font-semibold text-sidebar-foreground">
-              SeatPlotter
+              YukNgaji - Denah Kursi Ittiba
             </p>
           </div>
         </div>
