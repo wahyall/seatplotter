@@ -56,9 +56,7 @@ export default function CheckGenderPage() {
   const [removeSeatMode, setRemoveSeatMode] = React.useState(false);
   const [pageMode, setPageMode] = React.useState<
     "check" | "hadir" | "goodie_bag"
-  >(
-    "check",
-  );
+  >("check");
   const [participantInfoSeatId, setParticipantInfoSeatId] = React.useState<
     string | null
   >(null);
@@ -195,12 +193,7 @@ export default function CheckGenderPage() {
         return;
       }
 
-      if (
-        withScanQr &&
-        scanQrUrl &&
-        !seat.is_checked &&
-        !seat.participant_id
-      ) {
+      if (withScanQr && scanQrUrl && !seat.is_checked && !seat.participant_id) {
         setQrModalSeatId(seatId);
         return;
       }
@@ -377,7 +370,7 @@ export default function CheckGenderPage() {
           )}
         >
           <CheckCircle2Icon className="size-3.5" />
-          Check In
+          Peserta
         </button>
         <button
           onClick={() => setPageMode("hadir")}
