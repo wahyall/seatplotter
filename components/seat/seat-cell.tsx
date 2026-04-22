@@ -6,7 +6,13 @@ import { cn } from "@/lib/utils"
 import type { CategoryRow, SeatRow, SeatWithDim } from "@/types/db"
 import { useSeatStore } from "@/store/useSeatStore"
 
-export type SeatMode = "editor" | "view" | "check" | "booking" | "goodie_bag"
+export type SeatMode =
+  | "editor"
+  | "view"
+  | "check"
+  | "hadir"
+  | "booking"
+  | "goodie_bag"
 
 export type SeatBookingState = {
   /** Seat is booked by someone (has participant_id) */
@@ -108,13 +114,14 @@ function SeatCellInner({
   const dim = seat._dimmed ? "opacity-[0.2]" : ""
   const isBookingMode = mode === "booking"
   const isCheckMode = mode === "check"
+  const isHadirMode = mode === "hadir"
   const isGoodieBagMode = mode === "goodie_bag"
   
   const booked = isBookingMode && seat._booked
   const mine = isBookingMode && seat._mine
 
   const checkedStyle =
-    (isCheckMode && seat.is_checked) || (isGoodieBagMode && seat.is_goodie_bag) ? "opacity-[0.4]" : ""
+    (isCheckMode && seat.is_checked) || (isHadirMode && seat.is_checked) || (isGoodieBagMode && seat.is_goodie_bag) ? "opacity-[0.4]" : ""
 
   return (
     <button
@@ -175,17 +182,17 @@ function SeatCellInner({
         </span>
       )}
       {/* Check/GoodieBag mode overrides: booked (selected) or checked-in */}
-      {(isCheckMode || isGoodieBagMode) && seat.participant_id && !seat.is_goodie_bag && (
+      {isCheckMode && seat.participant_id && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50">
           <UserIcon className="size-3.5 text-white/90 drop-shadow-sm" strokeWidth={2.5} />
         </span>
       )}
-      {seat.is_checked && !seat.participant_id && !isBookingMode && mode !== "editor" && !isGoodieBagMode && (
-        <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 ring-2 ring-emerald-400 saturate-50">
+      {isHadirMode && seat.is_checked && (
+        <span className="absolute inset-0 flex items-center justify-center rounded-md ring-2 ring-emerald-400 saturate-50">
           <CheckIcon className="size-5 text-white/90 drop-shadow-lg" strokeWidth={3} />
         </span>
       )}
-      {seat.is_goodie_bag && isGoodieBagMode && (
+      {isGoodieBagMode && seat.is_goodie_bag && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 ring-2 ring-purple-400 saturate-50">
           <GiftIcon className="size-5 text-white/90 drop-shadow-lg" strokeWidth={3} />
         </span>

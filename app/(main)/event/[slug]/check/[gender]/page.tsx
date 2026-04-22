@@ -54,7 +54,9 @@ export default function CheckGenderPage() {
   const [qrModalSeatId, setQrModalSeatId] = React.useState<string | null>(null);
 
   const [removeSeatMode, setRemoveSeatMode] = React.useState(false);
-  const [pageMode, setPageMode] = React.useState<"check" | "goodie_bag">(
+  const [pageMode, setPageMode] = React.useState<
+    "check" | "hadir" | "goodie_bag"
+  >(
     "check",
   );
   const [participantInfoSeatId, setParticipantInfoSeatId] = React.useState<
@@ -81,7 +83,7 @@ export default function CheckGenderPage() {
   const stats = React.useMemo(() => {
     const active = seats.filter((s) => !s.is_empty);
     const checked = active.filter((s) =>
-      pageMode === "check" ? s.is_checked : s.is_goodie_bag,
+      pageMode === "goodie_bag" ? s.is_goodie_bag : s.is_checked,
     );
     const pct =
       active.length > 0
@@ -91,7 +93,7 @@ export default function CheckGenderPage() {
       total: active.length,
       checked: checked.length,
       pct,
-      label: pageMode === "check" ? "Hadir" : "Goodie Bag",
+      label: pageMode === "goodie_bag" ? "Goodie Bag" : "Hadir",
     };
   }, [seats, pageMode]);
 
@@ -139,7 +141,7 @@ export default function CheckGenderPage() {
       if (seat.is_checked && !removeSeatMode && !seat.participant_id) {
         return;
       }
-    } else {
+    } else if (pageMode === "goodie_bag") {
       if (seat.is_goodie_bag && !removeSeatMode) {
         return;
       }
@@ -187,7 +189,7 @@ export default function CheckGenderPage() {
           }
         }
         return;
-      } else {
+      } else if (pageMode !== "hadir") {
         setParticipantInfoSeatId(seatId);
         if (!seat.participants) {
           setLoadingParticipant(true);
@@ -221,7 +223,7 @@ export default function CheckGenderPage() {
           checked_at: null,
         });
       }
-    } else {
+    } else if (pageMode === "goodie_bag") {
       const next = !seat.is_goodie_bag;
       try {
         await persistGoodieBag(gender, seatId, next);
@@ -233,6 +235,18 @@ export default function CheckGenderPage() {
         useSeatStore.getState().updateSeatLocal(seatId, gender, {
           is_goodie_bag: !next,
           goodie_bag_at: null,
+        });
+      }
+    } else {
+      if (seat.is_checked) return;
+      try {
+        await persistCheck(gender, seatId, true);
+        toast.success("Berhasil ditandai hadir");
+      } catch {
+        toast.error("Gagal update kehadiran");
+        useSeatStore.getState().updateSeatLocal(seatId, gender, {
+          is_checked: false,
+          checked_at: null,
         });
       }
     }
@@ -301,12 +315,19 @@ export default function CheckGenderPage() {
 
       <div>
         <h1 className="font-display text-xl font-bold">
-          {pageMode === "check" ? "Centang" : "Goodie Bag"} — {layout.label}
+          {pageMode === "goodie_bag"
+            ? "Goodie Bag"
+            : pageMode === "hadir"
+              ? "Hadir"
+              : "Centang"}{" "}
+          — {layout.label}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {pageMode === "check"
-            ? "Tap kursi untuk hadir / batal hadir."
-            : "Tap kursi untuk beri goodie bag."}
+          {pageMode === "goodie_bag"
+            ? "Tap kursi untuk beri goodie bag."
+            : pageMode === "hadir"
+              ? "Tap kursi untuk tandai hadir."
+              : "Tap kursi untuk hadir / batal hadir."}
         </p>
       </div>
 
@@ -322,6 +343,18 @@ export default function CheckGenderPage() {
         >
           <CheckCircle2Icon className="size-3.5" />
           Check In
+        </button>
+        <button
+          onClick={() => setPageMode("hadir")}
+          className={cn(
+            "px-3 py-1.5 text-xs font-medium rounded-[3px] transition-colors duration-150 flex items-center gap-1.5",
+            pageMode === "hadir"
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <CheckCircle2Icon className="size-3.5" />
+          Hadir
         </button>
         <button
           onClick={() => setPageMode("goodie_bag")}
