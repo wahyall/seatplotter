@@ -30,6 +30,32 @@ import {
 import { TicketPrint } from "@/components/seat/ticket-print"
 import { exportTicketPNG } from "@/lib/export-png"
 import { eventPrimaryColor, primaryMutedWash } from "@/lib/event-color"
+import {
+  getBookingThemeId,
+  bookingThemePrimaryFallback,
+  bookingThemePageRootClass,
+  bookingBannerShellClass,
+  bookingBannerOverlayClass,
+  bookingHeaderClass,
+  bookingTitleClass,
+  bookingBottomPanelClass,
+  bookingTabShellClass,
+  bookingModalBackdropClass,
+  bookingModalCardClass,
+  bookingStageBarClass,
+  bookingLoaderShellClass,
+  bookingBookedPillClass,
+  bookingBookedPillBadgeClass,
+  bookingBookedDownloadBtnClass,
+  bookingCompletionTextClass,
+  bookingSecondaryButtonClass,
+  bookingOverlayBlockClass,
+  bookingMicroLoadingCardClass,
+  bookingRingOffsetClass,
+  bookingInsetPreviewClass,
+  bookingTicketCardIdleClass,
+} from "@/lib/booking-theme"
+import { cn } from "@/lib/utils"
 
 export default function BookingPage() {
   const params = useParams<{ slug?: string | string[] }>()
@@ -39,11 +65,15 @@ export default function BookingPage() {
     return rawSlug ?? ""
   }, [params])
   const bannerUrl = pageSlug ? `/banners/${pageSlug}.jpg` : null
+  const themeId = React.useMemo(() => getBookingThemeId(pageSlug), [pageSlug])
   const { scrollY } = useScroll()
   const bannerY = useTransform(scrollY, [0, 900], [0, 180])
 
   const event = useLayoutStore((s) => s.event)
-  const primary = React.useMemo(() => eventPrimaryColor(event), [event])
+  const effectivePrimary = React.useMemo(() => {
+    if (event?.color?.trim()) return eventPrimaryColor(event)
+    return bookingThemePrimaryFallback(themeId)
+  }, [event, themeId])
   const hydrated = useLayoutStore((s) => s.hydrated)
 
   const layoutM = useLayoutStore((s) => s.layouts.male)
@@ -416,8 +446,8 @@ export default function BookingPage() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+      <div className={bookingLoaderShellClass(themeId)}>
+        <Loader2Icon className="size-8 animate-spin" style={{ color: effectivePrimary }} />
       </div>
     )
   }
@@ -432,32 +462,32 @@ export default function BookingPage() {
 
   return (
     <div
-      className="relative flex min-h-screen flex-col"
+      className={bookingThemePageRootClass(themeId)}
       style={
         {
-          "--event-primary": primary,
+          "--event-primary": effectivePrimary,
         } as React.CSSProperties
       }
     >
       {bannerUrl && (
-        <div className="sticky top-0 z-0 h-[220px] w-full overflow-hidden border-b border-border bg-card">
+        <div className={bookingBannerShellClass(themeId)}>
           <motion.img
             src={bannerUrl}
             alt={`${pageSlug} banner`}
             className="h-[280px] w-full object-cover will-change-transform"
             style={{ y: bannerY }}
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/20 via-background/35 to-background/80" />
+          <div className={bookingBannerOverlayClass(themeId)} />
         </div>
       )}
 
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
+      <header className={bookingHeaderClass(themeId)}>
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3">
           <div className="flex-1 min-w-0">
-            <h1 className="truncate font-display text-sm font-bold sm:text-base">
+            <h1 className={bookingTitleClass(themeId)}>
               {event?.event_name ?? "Pilih Kursi"}
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground tabular-nums">
               {stats.available} kursi tersedia &middot; {stats.booked} terisi
             </p>
           </div>
@@ -483,10 +513,13 @@ export default function BookingPage() {
           </span>
           <span className="flex items-center gap-1.5">
             <span
-              className="inline-block size-3 rounded-sm ring-2 ring-offset-1 ring-offset-background"
+              className={cn(
+                "inline-block size-3 rounded-sm ring-2 ring-offset-1",
+                bookingRingOffsetClass(themeId)
+              )}
               style={{
-                backgroundColor: primaryMutedWash(primary, 35),
-                boxShadow: `0 0 0 2px ${primary}`,
+                backgroundColor: primaryMutedWash(effectivePrimary, 35),
+                boxShadow: `0 0 0 2px ${effectivePrimary}`,
               }}
             />
             Kursi Anda
@@ -499,7 +532,7 @@ export default function BookingPage() {
 
         {/* TABS */}
         <div className="flex w-full justify-center">
-          <div className="inline-flex items-center rounded-md border border-border bg-secondary p-0.5">
+          <div className={bookingTabShellClass(themeId)}>
             <button
               type="button"
               onClick={() => {
@@ -516,7 +549,7 @@ export default function BookingPage() {
               }`}
               style={
                 activeTab === "male"
-                  ? { backgroundColor: primary }
+                  ? { backgroundColor: effectivePrimary }
                   : undefined
               }
             >
@@ -538,7 +571,7 @@ export default function BookingPage() {
               }`}
               style={
                 activeTab === "female"
-                  ? { backgroundColor: primary }
+                  ? { backgroundColor: effectivePrimary }
                   : undefined
               }
             >
@@ -552,7 +585,7 @@ export default function BookingPage() {
           {/* PRIA */}
           {activeTab === "male" && layoutM && (
             <div className="flex flex-col gap-4 flex-1 min-w-0">
-              <StageBar label="PRIA" />
+              <StageBar label="PRIA" className={bookingStageBarClass(themeId)} />
               <SeatGrid
                 seats={displaySeatsM}
                 layout={layoutM}
@@ -567,7 +600,7 @@ export default function BookingPage() {
           {/* WANITA */}
           {activeTab === "female" && layoutF && (
             <div className="flex flex-col gap-4 flex-1 min-w-0">
-              <StageBar label="WANITA" />
+              <StageBar label="WANITA" className={bookingStageBarClass(themeId)} />
               <SeatGrid
                 seats={displaySeatsF}
                 layout={layoutF}
@@ -581,11 +614,16 @@ export default function BookingPage() {
         </div>
 
         {(booking || microLoading) && (
-          <div className={`fixed inset-0 z-50 flex items-center justify-center ${booking ? 'bg-background/80 backdrop-blur-sm' : 'bg-transparent'}`}>
-            <div className={`flex flex-col items-center gap-3 ${microLoading && !booking ? 'rounded-2xl border border-border/50 bg-background/90 p-6 shadow-xl backdrop-blur-md' : ''}`}>
+          <div className={bookingOverlayBlockClass(themeId, booking)}>
+            <div
+              className={cn(
+                "flex flex-col items-center gap-3",
+                microLoading && !booking ? bookingMicroLoadingCardClass(themeId) : ""
+              )}
+            >
               <Loader2Icon
                 className="size-8 animate-spin"
-                style={{ color: primary }}
+                style={{ color: effectivePrimary }}
               />
               <p className="text-sm font-medium">{booking ? "Memproses booking..." : "Memproses..."}</p>
             </div>
@@ -594,14 +632,14 @@ export default function BookingPage() {
       </div>
 
       {/* Bottom Panel */}
-      <div className="sticky bottom-0 z-40 border-t border-border bg-background">
+      <div className={bookingBottomPanelClass(themeId)}>
         <div className="mx-auto max-w-[1400px] px-4 py-3">
           {tickets.length === 0 ? (
               <button
                 type="button"
                 onClick={() => setShowScanner(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
-                style={{ backgroundColor: primary }}
+                className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95"
+                style={{ backgroundColor: effectivePrimary }}
               >
               <QrCodeIcon className="size-4" />
               Scan Tiket PDF
@@ -627,23 +665,22 @@ export default function BookingPage() {
                                 setActiveTab(t.jenis_kelamin === "MALE" ? "male" : "female")
                               }
                             }}
-                            className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors duration-150 ${
-                              isSelected
-                                ? ""
-                                : "border-border bg-card hover:border-[color:var(--event-primary)]"
-                            }`}
+                            className={cn(
+                              "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors duration-150",
+                              isSelected ? "" : bookingTicketCardIdleClass(themeId)
+                            )}
                             style={
                               isSelected
                                 ? {
-                                    borderColor: primary,
-                                    backgroundColor: primaryMutedWash(primary, 12),
+                                    borderColor: effectivePrimary,
+                                    backgroundColor: primaryMutedWash(effectivePrimary, 12),
                                   }
                                 : undefined
                             }
                           >
                             <TicketIcon
                               className="size-3.5 shrink-0"
-                              style={{ color: primary }}
+                              style={{ color: effectivePrimary }}
                             />
                             <div className="min-w-0">
                               <p className="truncate font-medium">{t.nama}</p>
@@ -695,7 +732,8 @@ export default function BookingPage() {
                           toast.success("Semua kursi berhasil disimpan permanen!")
                         }
                       }}
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 py-2.5 text-sm font-bold text-white transition-colors duration-150 hover:bg-emerald-500 disabled:opacity-50"
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-bold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50"
+                      style={{ backgroundColor: effectivePrimary }}
                     >
                       {booking ? <Loader2Icon className="size-4 animate-spin" /> : <CheckCircle2Icon className="size-4" />}
                       SIMPAN PILIHAN KURSI
@@ -717,16 +755,16 @@ export default function BookingPage() {
                     return (
                       <span
                         key={t.id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 pl-2.5 pr-1 py-1 text-[10px] font-medium text-emerald-400"
+                        className={bookingBookedPillClass(themeId)}
                       >
                         <CheckCircle2Icon className="size-3" />
                         {t.nama}
-                        <span className="bg-emerald-500/20 px-1.5 py-0.5 rounded-md text-emerald-300 ml-1">
+                        <span className={bookingBookedPillBadgeClass(themeId)}>
                           Kursi: {seatLabel}
                         </span>
                         <button
                           onClick={() => exportTicketPNG(t.id, t.nama)}
-                          className="ml-1 rounded-full p-1 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 transition-colors"
+                          className={bookingBookedDownloadBtnClass(themeId)}
                           title="Download Tiket"
                         >
                           <DownloadIcon className="size-3" />
@@ -740,14 +778,15 @@ export default function BookingPage() {
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setShowScanner(true)}
-                  className="flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors duration-150 hover:bg-secondary"
+                  className={bookingSecondaryButtonClass(themeId)}
                 >
                   <QrCodeIcon className="size-3" />
                   Scan lagi
                 </button>
                 {unbookedTickets.length === 0 && bookedTickets.length > 0 && (
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+                  <span className={bookingCompletionTextClass(themeId)}>
                     <SparklesIcon className="size-3" />
                     Semua tiket sudah memiliki kursi!
                   </span>
@@ -766,19 +805,19 @@ export default function BookingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
+            className={cn(bookingModalBackdropClass(themeId), "p-4")}
           >
             <motion.div
               initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.97, opacity: 0 }}
-              className="w-full max-w-2xl rounded-lg border border-border bg-card p-5 max-h-[90vh] overflow-y-auto"
+              className={bookingModalCardClass(themeId)}
             >
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 font-display text-base font-bold">
                   <QrCodeIcon
                     className="size-4"
-                    style={{ color: primary }}
+                    style={{ color: effectivePrimary }}
                   />
                   Scan Tiket PDF
                 </h2>
@@ -794,14 +833,21 @@ export default function BookingPage() {
 
               <label
                 htmlFor="scan-pdf-upload"
-                className={`flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed px-6 py-8 transition-colors duration-150 ${
-                  scanning ? "" : "border-border hover:border-[color:var(--event-primary)]"
-                }`}
+                className={cn(
+                  "flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed px-6 py-8 transition-colors duration-150",
+                  scanning
+                    ? ""
+                    : themeId === "reconnect"
+                      ? "border-emerald-900/50 hover:border-[color:var(--event-primary)]"
+                      : themeId === "disconnect"
+                        ? "border-zinc-600 hover:border-[color:var(--event-primary)]"
+                        : "border-border hover:border-[color:var(--event-primary)]"
+                )}
                 style={
                   scanning
                     ? {
-                        borderColor: primaryMutedWash(primary, 55),
-                        backgroundColor: primaryMutedWash(primary, 6),
+                        borderColor: primaryMutedWash(effectivePrimary, 55),
+                        backgroundColor: primaryMutedWash(effectivePrimary, 6),
                       }
                     : undefined
                 }
@@ -810,7 +856,7 @@ export default function BookingPage() {
                   <div className="flex flex-col items-center gap-3">
                     <ScanLineIcon
                       className="size-10 animate-pulse"
-                      style={{ color: primary }}
+                      style={{ color: effectivePrimary }}
                     />
                     <p className="text-sm font-medium">Scanning...</p>
                     {scanProgress && (
@@ -843,7 +889,7 @@ export default function BookingPage() {
               </label>
 
               {previewUrl && (
-                <div className="mt-4 overflow-hidden rounded-md border border-border bg-secondary flex items-center justify-center">
+                <div className={bookingInsetPreviewClass(themeId)}>
                   <img 
                     src={previewUrl} 
                     className="max-h-[50vh] w-auto max-w-full object-contain drop-shadow-sm rounded" 
