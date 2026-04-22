@@ -474,7 +474,7 @@ export default function BookingPage() {
           <motion.img
             src={bannerUrl}
             alt={`${pageSlug} banner`}
-            className="h-[280px] w-full object-cover will-change-transform"
+            className="h-[220px] w-full object-cover will-change-transform"
             style={{ y: bannerY }}
           />
           <div className={bookingBannerOverlayClass(themeId)} />
