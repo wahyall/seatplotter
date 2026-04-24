@@ -113,7 +113,7 @@ export default function EventsListPage() {
                   href={`/event/${ev.slug}/dashboard`}
                   className="inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary"
                 >
-                  <LayoutDashboardIcon className="size-4" />
+                  <LayoutDashboardIcon className="size-4 mr-2" />
                   Dashboard
                 </Link>
                 <button
@@ -121,7 +121,7 @@ export default function EventsListPage() {
                   onClick={() => handleCopyBookingLink(ev.slug)}
                   className="inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary"
                 >
-                  <QrCodeIcon className="size-4" />
+                  <QrCodeIcon className="size-4 mr-2" />
                   {copiedSlug === ev.slug ? "Disalin" : "Salin link Booking"}
                 </button>
               </div>
