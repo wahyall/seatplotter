@@ -6,7 +6,13 @@ import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import type { EventRow } from "@/types/db";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, MapPinIcon, ArrowRightIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  MapPinIcon,
+  ArrowRightIcon,
+  LayoutDashboardIcon,
+  QrCodeIcon,
+} from "lucide-react";
 
 export default function EventsListPage() {
   const [events, setEvents] = React.useState<EventRow[]>([]);
@@ -107,6 +113,7 @@ export default function EventsListPage() {
                   href={`/event/${ev.slug}/dashboard`}
                   className="inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary"
                 >
+                  <LayoutDashboardIcon className="size-4" />
                   Dashboard
                 </Link>
                 <button
@@ -114,6 +121,7 @@ export default function EventsListPage() {
                   onClick={() => handleCopyBookingLink(ev.slug)}
                   className="inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary"
                 >
+                  <QrCodeIcon className="size-4" />
                   {copiedSlug === ev.slug ? "Disalin" : "Salin link Booking"}
                 </button>
               </div>
