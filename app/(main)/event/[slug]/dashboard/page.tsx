@@ -58,6 +58,7 @@ export default function DashboardPage() {
   const patchEvent = useLayoutStore((s) => s.patchEvent);
 
   const scanQrUrl = event?.scan_qr_url ?? "";
+  const [isBookingLinkCopied, setIsBookingLinkCopied] = React.useState(false);
 
   const ids = [maleL?.id, femaleL?.id].filter(Boolean) as string[];
   const { isConnected } = useRealtimeSeats(ids);
@@ -72,6 +73,7 @@ export default function DashboardPage() {
   );
 
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleScanQrUrlChange = React.useCallback(
     (value: string) => {
@@ -87,14 +89,31 @@ export default function DashboardPage() {
         if (error) toast.error("Gagal menyimpan Scan QR Url");
       }, 600);
     },
-    [event?.id, patchEvent],
+    [event, patchEvent],
   );
 
   React.useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
+
+  const handleCopyBookingLink = React.useCallback(async () => {
+    const bookingUrl = `${window.location.origin}/booking/${slug}`;
+    try {
+      await navigator.clipboard.writeText(bookingUrl);
+      setIsBookingLinkCopied(true);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(
+        () => setIsBookingLinkCopied(false),
+        2000,
+      );
+      toast.success("Link booking berhasil disalin");
+    } catch {
+      toast.error("Gagal menyalin link booking");
+    }
+  }, [slug]);
 
   if (!hydrated) {
     return (
@@ -194,16 +213,17 @@ export default function DashboardPage() {
           <CheckCircle2Icon className="size-4" />
           Mulai centang
         </Link>
-        <Link
-          href={`/booking/${slug}`}
+        <button
+          type="button"
+          onClick={handleCopyBookingLink}
           className={cn(
             buttonVariants({ variant: "outline", size: "lg" }),
             "inline-flex gap-2 rounded-md",
           )}
         >
           <QrCodeIcon className="size-4" />
-          Booking Kursi
-        </Link>
+          {isBookingLinkCopied ? "Disalin" : "Salin link Booking"}
+        </button>
       </div>
     </div>
   );

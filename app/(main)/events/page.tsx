@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import type { EventRow } from "@/types/db";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,10 @@ import { CalendarIcon, MapPinIcon, ArrowRightIcon } from "lucide-react";
 export default function EventsListPage() {
   const [events, setEvents] = React.useState<EventRow[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [copiedSlug, setCopiedSlug] = React.useState<string | null>(null);
+  const copiedTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   React.useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -24,6 +29,25 @@ export default function EventsListPage() {
         setEvents(data ?? []);
         setLoading(false);
       });
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
+
+  const handleCopyBookingLink = React.useCallback(async (slug: string) => {
+    const bookingUrl = `${window.location.origin}/booking/${slug}`;
+    try {
+      await navigator.clipboard.writeText(bookingUrl);
+      setCopiedSlug(slug);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopiedSlug(null), 2000);
+      toast.success("Link booking berhasil disalin");
+    } catch {
+      toast.error("Gagal menyalin link booking");
+    }
   }, []);
 
   if (loading) {
@@ -85,12 +109,13 @@ export default function EventsListPage() {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  href={`/booking/${ev.slug}`}
+                <button
+                  type="button"
+                  onClick={() => handleCopyBookingLink(ev.slug)}
                   className="inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary"
                 >
-                  Booking Kursi
-                </Link>
+                  {copiedSlug === ev.slug ? "Disalin" : "Salin link Booking"}
+                </button>
               </div>
             </div>
           ))}
