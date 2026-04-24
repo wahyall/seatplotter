@@ -92,7 +92,12 @@ export default function EventsListPage() {
                 <h2 className="text-base font-semibold leading-tight">
                   {ev.event_name}
                 </h2>
-                <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary" />
+                <Link
+                  href={`/event/${ev.slug}/dashboard`}
+                  className="group-hover:text-primary px-4 -mr-2"
+                >
+                  <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary" />
+                </Link>
               </div>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 {ev.event_date && (
