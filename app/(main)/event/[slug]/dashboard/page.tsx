@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import { useParams } from "next/navigation"
-import { toast } from "sonner"
-import { supabase } from "@/lib/supabase"
-import { useLayoutStore } from "@/store/useLayoutStore"
-import { useSeatStore } from "@/store/useSeatStore"
-import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats"
-import { ConnectionBanner } from "@/components/layout/connection-banner"
-import { buttonVariants } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
-import { Skeleton } from "@/components/ui/skeleton"
+import * as React from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { useLayoutStore } from "@/store/useLayoutStore";
+import { useSeatStore } from "@/store/useSeatStore";
+import { useRealtimeSeats } from "@/lib/hooks/useRealtimeSeats";
+import { ConnectionBanner } from "@/components/layout/connection-banner";
+import { buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -21,8 +21,8 @@ import {
   SettingsIcon,
   CheckCircle2Icon,
   QrCodeIcon,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function statsForGender(
   gender: "male" | "female",
@@ -48,53 +48,53 @@ function statsForGender(
 }
 
 export default function DashboardPage() {
-  const { slug } = useParams<{ slug: string }>()
-  const hydrated = useLayoutStore((s) => s.hydrated)
-  const event = useLayoutStore((s) => s.event)
-  const maleL = useLayoutStore((s) => s.layouts.male)
-  const femaleL = useLayoutStore((s) => s.layouts.female)
-  const maleSeats = useSeatStore((s) => s.seats.male)
-  const femaleSeats = useSeatStore((s) => s.seats.female)
-  const patchEvent = useLayoutStore((s) => s.patchEvent)
+  const { slug } = useParams<{ slug: string }>();
+  const hydrated = useLayoutStore((s) => s.hydrated);
+  const event = useLayoutStore((s) => s.event);
+  const maleL = useLayoutStore((s) => s.layouts.male);
+  const femaleL = useLayoutStore((s) => s.layouts.female);
+  const maleSeats = useSeatStore((s) => s.seats.male);
+  const femaleSeats = useSeatStore((s) => s.seats.female);
+  const patchEvent = useLayoutStore((s) => s.patchEvent);
 
-  const scanQrUrl = event?.scan_qr_url ?? ""
+  const scanQrUrl = event?.scan_qr_url ?? "";
 
-  const ids = [maleL?.id, femaleL?.id].filter(Boolean) as string[]
-  const { isConnected } = useRealtimeSeats(ids)
+  const ids = [maleL?.id, femaleL?.id].filter(Boolean) as string[];
+  const { isConnected } = useRealtimeSeats(ids);
 
   const maleStats = React.useMemo(
     () => statsForGender("male", maleSeats),
-    [maleSeats]
-  )
+    [maleSeats],
+  );
   const femaleStats = React.useMemo(
     () => statsForGender("female", femaleSeats),
-    [femaleSeats]
-  )
+    [femaleSeats],
+  );
 
-  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleScanQrUrlChange = React.useCallback(
     (value: string) => {
-      patchEvent({ scan_qr_url: value })
+      patchEvent({ scan_qr_url: value });
 
-      if (timerRef.current) clearTimeout(timerRef.current)
+      if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(async () => {
-        if (!event?.id) return
+        if (!event?.id) return;
         const { error } = await supabase
           .from("events")
           .update({ scan_qr_url: value, updated_at: new Date().toISOString() })
-          .eq("id", event.id)
-        if (error) toast.error("Gagal menyimpan Scan QR Url")
-      }, 600)
+          .eq("id", event.id);
+        if (error) toast.error("Gagal menyimpan Scan QR Url");
+      }, 600);
     },
-    [event?.id, patchEvent]
-  )
+    [event?.id, patchEvent],
+  );
 
   React.useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [])
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   if (!hydrated) {
     return (
@@ -106,10 +106,10 @@ export default function DashboardPage() {
           <Skeleton className="h-36 rounded-md" />
         </div>
       </div>
-    )
+    );
   }
 
-  const base = `/event/${slug}`
+  const base = `/event/${slug}`;
 
   return (
     <div className="space-y-6 pb-8">
@@ -140,12 +140,10 @@ export default function DashboardPage() {
           "inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-medium",
           isConnected
             ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-            : "border-amber-500/30 bg-amber-500/10 text-amber-400"
+            : "border-amber-500/30 bg-amber-500/10 text-amber-400",
         )}
       >
-        <RadioIcon
-          className={cn("size-3", isConnected && "animate-pulse")}
-        />
+        <RadioIcon className={cn("size-3", isConnected && "animate-pulse")} />
         {isConnected ? "Realtime aktif" : "Menyambungkan\u2026"}
       </div>
 
@@ -171,16 +169,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <GenderStatsCard
-          label="Pria"
-          color="blue"
-          stats={maleStats}
-        />
-        <GenderStatsCard
-          label="Wanita"
-          color="pink"
-          stats={femaleStats}
-        />
+        <GenderStatsCard label="Pria" color="blue" stats={maleStats} />
+        <GenderStatsCard label="Wanita" color="pink" stats={femaleStats} />
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -188,7 +178,7 @@ export default function DashboardPage() {
           href={`${base}/editor`}
           className={cn(
             buttonVariants({ variant: "default", size: "lg" }),
-            "inline-flex gap-2 rounded-md"
+            "inline-flex gap-2 rounded-md",
           )}
         >
           <SettingsIcon className="size-4" />
@@ -198,15 +188,25 @@ export default function DashboardPage() {
           href={`${base}/check`}
           className={cn(
             buttonVariants({ variant: "secondary", size: "lg" }),
-            "inline-flex gap-2 rounded-md"
+            "inline-flex gap-2 rounded-md",
           )}
         >
           <CheckCircle2Icon className="size-4" />
           Mulai centang
         </Link>
+        <Link
+          href={`/booking/${slug}`}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "inline-flex gap-2 rounded-md",
+          )}
+        >
+          <QrCodeIcon className="size-4" />
+          Booking Kursi
+        </Link>
       </div>
     </div>
-  )
+  );
 }
 
 function GenderStatsCard({
@@ -214,17 +214,25 @@ function GenderStatsCard({
   color,
   stats,
 }: {
-  label: string
-  color: "blue" | "pink"
-  stats: { total: number; checked: number; goodieBag: number; checkPct: number; goodiePct: number }
+  label: string;
+  color: "blue" | "pink";
+  stats: {
+    total: number;
+    checked: number;
+    goodieBag: number;
+    checkPct: number;
+    goodiePct: number;
+  };
 }) {
-  const borderColor = color === "blue" ? "border-primary/20" : "border-rose-500/20"
+  const borderColor =
+    color === "blue" ? "border-primary/20" : "border-rose-500/20";
 
   return (
     <div className={cn("rounded-md border bg-card p-4", borderColor)}>
       <p className="text-sm font-semibold">{label}</p>
       <p className="mt-0.5 text-xs text-muted-foreground">
-        {stats.checked} / {stats.total} hadir &middot; {stats.goodieBag} / {stats.total} goodie bag
+        {stats.checked} / {stats.total} hadir &middot; {stats.goodieBag} /{" "}
+        {stats.total} goodie bag
       </p>
 
       <div className="mt-4 space-y-3">
@@ -244,5 +252,5 @@ function GenderStatsCard({
         </div>
       </div>
     </div>
-  )
+  );
 }
