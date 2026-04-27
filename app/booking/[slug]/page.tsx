@@ -612,7 +612,7 @@ export default function BookingPage() {
                 categories={categoriesM}
                 mode="booking"
                 onSeatAction={handleSeatClickM}
-                className="w-full md:w-auto md:self-center md:max-w-full"
+                className="w-full [--seat-size:48px] md:w-auto md:self-center md:max-w-full md:[--seat-size:56px]"
               />
             </div>
           )}
@@ -627,7 +627,7 @@ export default function BookingPage() {
                 categories={categoriesF}
                 mode="booking"
                 onSeatAction={handleSeatClickF}
-                className="w-full md:w-auto md:self-center md:max-w-full"
+                className="w-full [--seat-size:48px] md:w-auto md:self-center md:max-w-full md:[--seat-size:56px]"
               />
             </div>
           )}
@@ -799,7 +799,7 @@ export default function BookingPage() {
                     )}
                     {downloadingAllPdf ? "Mengunduh…" : "Unduh PDF (semua tiket)"}
                   </button>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3">
                     {bookedTickets.map((t) => {
                       const seatId = t.seat_id
                       let seatLabel = "-"
@@ -811,11 +811,14 @@ export default function BookingPage() {
                       return (
                         <span
                           key={t.id}
-                          className={bookingBookedPillClass(themeId)}
+                          className={cn(
+                            bookingBookedPillClass(themeId),
+                            "min-h-10 gap-2 px-3 py-2 text-sm md:min-h-11 md:text-base"
+                          )}
                         >
-                          <CheckCircle2Icon className="size-3" />
+                          <CheckCircle2Icon className="size-4 md:size-5" />
                           {t.nama}
-                          <span className={bookingBookedPillBadgeClass(themeId)}>
+                          <span className={cn(bookingBookedPillBadgeClass(themeId), "text-xs md:text-sm")}>
                             Kursi: {seatLabel}
                           </span>
                           <TicketPrint

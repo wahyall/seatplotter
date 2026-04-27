@@ -63,7 +63,7 @@ export function SeatGrid({
   const rowVirtualizer = useVirtualizer({
     count: layout.rows,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => (compact ? 50 : 44),
+    estimateSize: () => (compact ? 50 : 60),
     overscan: 6,
   })
 
