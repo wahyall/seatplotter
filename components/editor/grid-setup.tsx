@@ -18,13 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangleIcon, SparklesIcon } from "lucide-react"
 
@@ -43,9 +37,6 @@ export function GridSetup({
   const [reverse, setReverse] = React.useState(layout.reverse_col)
   const [loading, setLoading] = React.useState(false)
 
-  const seatCount = useSeatStore(
-    (s) => Object.keys(s.seats[gender]).length
-  )
   const setSeats = useSeatStore((s) => s.setSeats)
   const setLayouts = useLayoutStore((s) => s.setLayouts)
 
@@ -59,15 +50,11 @@ export function GridSetup({
     [colStart, cols]
   )
 
-  const availableStarts = React.useMemo(() => {
-    return Array.from({ length: 26 }, (_, i) => indexToChar(i)).filter(
-      (char) => validateColRange(char, cols).valid
-    )
-  }, [cols])
   const startColNumber = React.useMemo(
     () => Math.max(1, charToIndex(colStart) + 1),
     [colStart]
   )
+  const maxStartNumber = Math.max(1, 52 - cols + 1)
 
   const handleGenerate = async () => {
     if (!validation.valid || loading) return
@@ -174,21 +161,21 @@ export function GridSetup({
 
         <div className="space-y-2">
           <Label>Mulai dari kolom angka</Label>
-          <Select
-            value={colStart}
-            onValueChange={(v) => v && setColStart(v)}
-          >
-            <SelectTrigger className="h-11 w-full rounded-xl sm:h-10 sm:max-w-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableStarts.map((char) => (
-                <SelectItem key={char} value={char}>
-                  {charToIndex(char) + 1}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={maxStartNumber}
+            step={1}
+            value={startColNumber}
+            className="h-11 w-full rounded-xl sm:h-10 sm:max-w-xs"
+            onChange={(e) => {
+              const n = Number.parseInt(e.target.value, 10)
+              if (!Number.isFinite(n)) return
+              const clamped = Math.min(Math.max(n, 1), maxStartNumber)
+              setColStart(indexToChar(clamped - 1))
+            }}
+          />
           <p className="text-xs text-muted-foreground">
             Saat ini mulai dari kolom{" "}
             <strong className="text-foreground">{startColNumber}</strong>.
