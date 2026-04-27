@@ -799,7 +799,7 @@ export default function BookingPage() {
                     )}
                     {downloadingAllPdf ? "Mengunduh…" : "Unduh PDF (semua tiket)"}
                   </button>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-nowrap gap-3 overflow-x-auto pb-1">
                     {bookedTickets.map((t) => {
                       const seatId = t.seat_id
                       let seatLabel = "-"
@@ -813,7 +813,7 @@ export default function BookingPage() {
                           key={t.id}
                           className={cn(
                             bookingBookedPillClass(themeId),
-                            "min-h-10 gap-2 px-3 py-2 text-sm md:min-h-11 md:text-base"
+                            "min-h-10 shrink-0 gap-2 px-3 py-2 text-sm md:min-h-11 md:text-base"
                           )}
                         >
                           <CheckCircle2Icon className="size-4 md:size-5" />

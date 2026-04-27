@@ -135,8 +135,8 @@ function SeatCellInner({
         height: "var(--seat-size, 34px)",
       }}
       className={cn(
-        "relative shrink-0 rounded-md text-left font-mono text-[8px] font-bold text-white/90 shadow-sm transition-transform select-none",
-        compact && "text-[9px]",
+        "relative shrink-0 rounded-md text-left font-mono text-[10px] font-bold text-white/90 shadow-sm transition-transform select-none md:text-xs",
+        compact && "text-[11px] md:text-sm",
         "active:scale-90",
         dim,
         checkedStyle,
@@ -170,13 +170,13 @@ function SeatCellInner({
             </span>
           ) : (
           )} */}
-          <UserIcon className="size-3 text-white/80" strokeWidth={2.5} />
+          <UserIcon className="size-4 text-white/80" strokeWidth={2.5} />
         </span>
       )}
       {/* Booking mode: my seat */}
       {mine && (
         <span className="absolute inset-0 flex items-center justify-center rounded-md bg-red-200/80 ring-2 ring-red-400 ring-offset-1 ring-offset-background">
-          <span className="text-[12px] font-black text-slate-800 drop-shadow-md tracking-tighter" style={{ lineHeight: 1 }}>
+          <span className="text-sm font-black text-slate-800 drop-shadow-md tracking-tighter md:text-base" style={{ lineHeight: 1 }}>
             {seat._mineInitial?.substring(0, 2) ?? "✓"}
           </span>
         </span>
