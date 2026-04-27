@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import {
   getColHeaders,
   validateColRange,
+  charToIndex,
   indexToChar,
 } from "@/lib/seat-label"
 import { fetchSeats } from "@/lib/seats"
@@ -63,6 +64,10 @@ export function GridSetup({
       (char) => validateColRange(char, cols).valid
     )
   }, [cols])
+  const startColNumber = React.useMemo(
+    () => Math.max(1, charToIndex(colStart) + 1),
+    [colStart]
+  )
 
   const handleGenerate = async () => {
     if (!validation.valid || loading) return
@@ -129,7 +134,7 @@ export function GridSetup({
           </span>
         </CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          Atur baris (huruf), kolom (angka), huruf awal baris, dan opsi reverse kolom.
+          Atur baris (huruf), kolom (angka), kolom awal angka, dan opsi reverse kolom.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 px-4 pb-6 sm:space-y-8 sm:px-6 sm:pb-8">
@@ -168,7 +173,7 @@ export function GridSetup({
         </div>
 
         <div className="space-y-2">
-          <Label>Mulai dari huruf baris</Label>
+          <Label>Mulai dari kolom angka</Label>
           <Select
             value={colStart}
             onValueChange={(v) => v && setColStart(v)}
@@ -179,11 +184,15 @@ export function GridSetup({
             <SelectContent>
               {availableStarts.map((char) => (
                 <SelectItem key={char} value={char}>
-                  {char}
+                  {charToIndex(char) + 1}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground">
+            Saat ini mulai dari kolom{" "}
+            <strong className="text-foreground">{startColNumber}</strong>.
+          </p>
         </div>
 
         <div className="flex flex-col gap-3 rounded-md border border-border bg-secondary p-4">
@@ -198,7 +207,7 @@ export function GridSetup({
                 Reverse kolom
               </Label>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Angka kolom terbesar di kiri, kolom 1 di kanan (mis. 1–10 → 10 9 8 … 1).
+                Angka kolom terbesar di kiri, angka awal di kanan (mis. 5–14 → 14 13 … 5).
               </p>
             </div>
           </div>

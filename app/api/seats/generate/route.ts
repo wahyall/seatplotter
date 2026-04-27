@@ -32,16 +32,35 @@ export async function POST(req: Request) {
     )
   }
 
-  const { data: existingSeats, error: fetchErr } = await supabaseAdmin
-    .from("seats")
-    .select("id, row, col, label")
-    .eq("layout_id", layoutId)
+  const existingSeats: Array<{
+    id: string
+    row: number
+    col: number
+    label: string
+  }> = []
+  const PAGE_SIZE = 1000
+  let from = 0
 
-  if (fetchErr) {
-    return Response.json(
-      { success: false, error: fetchErr.message },
-      { status: 500 }
-    )
+  for (;;) {
+    const { data, error: fetchErr } = await supabaseAdmin
+      .from("seats")
+      .select("id, row, col, label")
+      .eq("layout_id", layoutId)
+      .order("row", { ascending: true })
+      .order("col", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (fetchErr) {
+      return Response.json(
+        { success: false, error: fetchErr.message },
+        { status: 500 }
+      )
+    }
+
+    const chunk = data ?? []
+    existingSeats.push(...chunk)
+    if (chunk.length < PAGE_SIZE) break
+    from += PAGE_SIZE
   }
 
   const existingMap = new Map<string, typeof existingSeats[0]>()

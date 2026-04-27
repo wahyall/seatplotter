@@ -25,11 +25,14 @@ const MAX_COL_SPAN = 52
 
 /** Column numbers left → right as displayed. */
 export function getColHeaders(
-  _colStartChar: string,
+  colStartChar: string,
   cols: number,
   reverseCol: boolean
 ): string[] {
-  const headers = Array.from({ length: cols }, (_, i) => String(i + 1))
+  const startNumber = charToIndex(colStartChar) + 1
+  const headers = Array.from({ length: cols }, (_, i) =>
+    String(startNumber + i)
+  )
   return reverseCol ? [...headers].reverse() : headers
 }
 
@@ -57,7 +60,7 @@ export function generateSeatsForLayout(
   colStartChar: string,
   reverseCol: boolean
 ) {
-  const rowHeaders = getRowHeaders(colStartChar, rows)
+  const rowHeaders = getRowHeaders("A", rows)
   const colHeaders = getColHeaders(colStartChar, cols, reverseCol)
   const seats: Array<{
     layout_id: string
@@ -91,7 +94,7 @@ export function validateColRange(colStartChar: string, cols: number) {
   if (startIdx < 0 || startIdx > 25) {
     return {
       valid: false as const,
-      errorMsg: `Huruf awal kolom tidak valid.`,
+      errorMsg: `Angka awal kolom tidak valid.`,
     }
   }
   if (cols < 1 || cols > MAX_COL_SPAN) {
@@ -101,10 +104,11 @@ export function validateColRange(colStartChar: string, cols: number) {
     }
   }
   if (startIdx + cols > MAX_COL_SPAN) {
-    const endLetters = indexToExcelLetters(startIdx + cols - 1)
+    const startNumber = startIdx + 1
+    const endNumber = startNumber + cols - 1
     return {
       valid: false as const,
-      errorMsg: `Melebihi AZ. Mulai "${colStartChar}" + ${cols} kolom = sampai "${endLetters}".`,
+      errorMsg: `Melebihi ${MAX_COL_SPAN}. Mulai ${startNumber} + ${cols} kolom = sampai ${endNumber}.`,
     }
   }
   return { valid: true as const, errorMsg: "" }
