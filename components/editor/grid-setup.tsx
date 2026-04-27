@@ -132,7 +132,7 @@ export function GridSetup({
           </div>
           <Slider
             min={1}
-            max={100}
+            max={60}
             step={1}
             value={[rows]}
             onValueChange={(v) => {
@@ -149,7 +149,7 @@ export function GridSetup({
           </div>
           <Slider
             min={1}
-            max={52}
+            max={60}
             step={1}
             value={[cols]}
             onValueChange={(v) => {
