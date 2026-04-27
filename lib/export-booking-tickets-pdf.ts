@@ -16,7 +16,7 @@ export async function exportBookingTicketsPdf(options: {
   /** JPEG 0…1. ~0.82 balances size and readability on dark tickets. */
   jpegQuality?: number
 }): Promise<void> {
-  const { ticketIds, fileBase, pixelRatio = 1.5, jpegQuality = 1 } = options
+  const { ticketIds, fileBase, pixelRatio = 1.75, jpegQuality = 1 } = options
   if (ticketIds.length === 0) return
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
