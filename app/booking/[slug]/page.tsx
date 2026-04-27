@@ -751,16 +751,19 @@ export default function BookingPage() {
                             .filter((t) => t.already_booked && t.seat_id)
                             .map((t) => t.id)
                           if (ticketIds.length > 0) {
-                            await new Promise((r) => setTimeout(r, 800))
+                            const loadingId = toast.loading("Sedang Mengunduh Tiket...")
                             try {
+                              await new Promise((r) => setTimeout(r, 800))
                               await exportBookingTicketsPdf({
                                 ticketIds,
                                 fileBase: `tiket-${event?.event_name ?? pageSlug}`,
                               })
+                              toast.success("Tiket berhasil diunduh", { id: loadingId })
                             } catch (e) {
                               console.error(e)
                               toast.error(
-                                "Gagal mengunduh PDF tiket otomatis. Gunakan tombol unduh di bawah."
+                                "Gagal mengunduh PDF tiket otomatis. Gunakan tombol unduh di bawah.",
+                                { id: loadingId }
                               )
                             }
                           }
