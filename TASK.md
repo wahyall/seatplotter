@@ -1,0 +1,5 @@
+- [ ] Tambahkan QRCODE pada tiket digital
+- [ ] Langsung download tiket digital setelah klik SIMPAN
+- [ ] Tiket digital diubah menjadi format PDF agar bisa dijadikan 1 file untuk beberapa peserta (case 1 akun beli banyak)
+- [ ] Font dibesarkan
+- [ ] Langsung muncul popup upload pdf
