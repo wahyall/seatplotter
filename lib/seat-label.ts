@@ -8,8 +8,8 @@ export function charToIndex(c: string): number {
   return c.toUpperCase().charCodeAt(0) - 65
 }
 
-/** 0-based column index → Excel-style letters: 0→A, 25→Z, 26→AA, …, 51→AZ */
-export function colIndexToExcelLetters(zeroBased: number): string {
+/** 0-based index → Excel-style letters: 0→A, 25→Z, 26→AA, …, 51→AZ */
+export function indexToExcelLetters(zeroBased: number): string {
   if (zeroBased < 0) return ""
   let n = zeroBased + 1
   let s = ""
@@ -23,29 +23,31 @@ export function colIndexToExcelLetters(zeroBased: number): string {
 
 const MAX_COL_SPAN = 52
 
-/**
- * Column letters left → right as displayed.
- * reverseCol false → A B C … Z AA AB …
- * reverseCol true → … (reversed)
- */
+/** Column numbers left → right as displayed. */
 export function getColHeaders(
-  colStartChar: string,
+  _colStartChar: string,
   cols: number,
   reverseCol: boolean
 ): string[] {
-  const start = charToIndex(colStartChar)
-  const headers = Array.from({ length: cols }, (_, i) =>
-    colIndexToExcelLetters(start + i)
-  )
+  const headers = Array.from({ length: cols }, (_, i) => String(i + 1))
   return reverseCol ? [...headers].reverse() : headers
 }
 
+/** Row letters top → bottom as displayed, configurable start letter. */
+export function getRowHeaders(rowStartChar: string, rows: number): string[] {
+  const start = charToIndex(rowStartChar)
+  return Array.from({ length: rows }, (_, i) =>
+    indexToExcelLetters(start + i)
+  )
+}
+
 export function generateSeatLabel(
-  row: number,
+  rowIndex: number,
   colIndex: number,
-  headers: string[]
+  rowHeaders: string[],
+  colHeaders: string[]
 ): string {
-  return `${headers[colIndex]}_${String(row + 1).padStart(2, "0")}`
+  return `${rowHeaders[rowIndex]}${colHeaders[colIndex]}`
 }
 
 export function generateSeatsForLayout(
@@ -55,7 +57,8 @@ export function generateSeatsForLayout(
   colStartChar: string,
   reverseCol: boolean
 ) {
-  const headers = getColHeaders(colStartChar, cols, reverseCol)
+  const rowHeaders = getRowHeaders(colStartChar, rows)
+  const colHeaders = getColHeaders(colStartChar, cols, reverseCol)
   const seats: Array<{
     layout_id: string
     row: number
@@ -72,7 +75,7 @@ export function generateSeatsForLayout(
         layout_id: layoutId,
         row: r,
         col: c,
-        label: generateSeatLabel(r, c, headers),
+        label: generateSeatLabel(r, c, rowHeaders, colHeaders),
         category_id: null,
         is_empty: false,
         is_checked: false,
@@ -98,7 +101,7 @@ export function validateColRange(colStartChar: string, cols: number) {
     }
   }
   if (startIdx + cols > MAX_COL_SPAN) {
-    const endLetters = colIndexToExcelLetters(startIdx + cols - 1)
+    const endLetters = indexToExcelLetters(startIdx + cols - 1)
     return {
       valid: false as const,
       errorMsg: `Melebihi AZ. Mulai "${colStartChar}" + ${cols} kolom = sampai "${endLetters}".`,

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { getColHeaders } from "@/lib/seat-label"
+import { getColHeaders, getRowHeaders } from "@/lib/seat-label"
 import type { CategoryRow, LayoutRow, SeatWithDim } from "@/types/db"
 import { SeatColHeader } from "@/components/seat/seat-col-header"
 import { SeatRowLabel } from "@/components/seat/seat-row-label"
@@ -44,6 +44,10 @@ export function SeatGrid({
         layout.reverse_col
       ),
     [layout.col_start_char, layout.cols, layout.reverse_col]
+  )
+  const rowHeaders = React.useMemo(
+    () => getRowHeaders(layout.col_start_char, layout.rows),
+    [layout.col_start_char, layout.rows]
   )
 
   const seatsByRow = React.useMemo(() => {
@@ -103,7 +107,7 @@ export function SeatGrid({
                     key={i}
                     className="flex w-max min-w-full items-center gap-[3px] px-1"
                   >
-                    <SeatRowLabel row={i} compact={compact} />
+                    <SeatRowLabel label={rowHeaders[i] ?? ""} compact={compact} />
                     {Array.from({ length: layout.cols }, (_, c) => {
                       const seat = seatsByRow[i]?.[c]
                       if (!seat) {
@@ -129,7 +133,7 @@ export function SeatGrid({
                         />
                       )
                     })}
-                    <SeatRowLabel row={i} compact={compact} />
+                    <SeatRowLabel label={rowHeaders[i] ?? ""} compact={compact} />
                   </div>
                 ))
               : rowVirtualizer.getVirtualItems().map((vRow) => (
@@ -138,7 +142,10 @@ export function SeatGrid({
                     className="absolute left-0 flex w-max min-w-full items-center gap-[3px] px-1"
                     style={{ top: vRow.start, height: vRow.size }}
                   >
-                    <SeatRowLabel row={vRow.index} compact={compact} />
+                    <SeatRowLabel
+                      label={rowHeaders[vRow.index] ?? ""}
+                      compact={compact}
+                    />
                     {Array.from({ length: layout.cols }, (_, c) => {
                       const seat = seatsByRow[vRow.index]?.[c]
                       if (!seat) {
@@ -164,7 +171,10 @@ export function SeatGrid({
                         />
                       )
                     })}
-                    <SeatRowLabel row={vRow.index} compact={compact} />
+                    <SeatRowLabel
+                      label={rowHeaders[vRow.index] ?? ""}
+                      compact={compact}
+                    />
                   </div>
                 ))}
           </div>

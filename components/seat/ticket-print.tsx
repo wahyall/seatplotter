@@ -72,6 +72,20 @@ interface TicketPrintProps {
 const TICKET_W = 350;
 const TICKET_H = 400;
 
+function splitSeatLabelParts(label: string): { row: string; col: string } {
+  const value = label.trim();
+  if (!value) return { row: "-", col: "-" };
+  if (value.includes("_")) {
+    const [left = "-", right = "-"] = value.split("_");
+    return { row: left || "-", col: right || "-" };
+  }
+  const match = value.match(/^([A-Za-z]+)(\d+)$/);
+  if (match) {
+    return { row: match[1].toUpperCase(), col: match[2] };
+  }
+  return { row: value, col: "-" };
+}
+
 function StaticBgPattern() {
   return (
     <svg
@@ -191,19 +205,14 @@ function seatGradientAccent(accent: string) {
 }
 
 function SeatGuard({
-  hash,
   seatLabel,
   accent,
 }: {
-  hash: string;
   seatLabel: string;
   accent: string;
 }) {
-  const curves = React.useMemo(
-    () => generateGuillochePaths(hash, 120, 56),
-    [hash],
-  );
   const grad = seatGradientAccent(accent);
+  const parts = React.useMemo(() => splitSeatLabelParts(seatLabel), [seatLabel]);
 
   return (
     <div className="relative inline-flex items-center justify-center">
@@ -220,7 +229,7 @@ function SeatGuard({
             backgroundRepeat: "no-repeat",
           }}
         >
-          {seatLabel.split("_")[0]}
+          {parts.row}
         </span>
         <span
           className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block"
@@ -231,7 +240,7 @@ function SeatGuard({
             backgroundRepeat: "no-repeat",
           }}
         >
-          {seatLabel.split("_")[1]}
+          {parts.col}
         </span>
         {/* <svg
           className="absolute inset-0 w-full h-full pointer-events-none z-30"
@@ -336,6 +345,7 @@ export function TicketPrint({
 }: TicketPrintProps) {
   const accent = eventPrimaryColor(event);
   const headerAccentLine = `linear-gradient(to right, transparent, color-mix(in srgb, ${accent} 50%, transparent), transparent)`;
+  const seatParts = React.useMemo(() => splitSeatLabelParts(seatLabel), [seatLabel]);
 
   return (
     <div className="absolute w-0 h-0 overflow-hidden pointer-events-none">
@@ -394,7 +404,7 @@ export function TicketPrint({
             <p className="text-white/40 text-[10px] uppercase font-bold tracking-[0.2em] mb-1.5">
               NAMA PESERTA
             </p>
-            <div className="text-white text-2xl font-semibold tracking-tight break-words">
+            <div className="text-white text-2xl font-semibold tracking-tight wrap-break-word">
               {ticket.nama}
             </div>
           </div>
@@ -416,7 +426,6 @@ export function TicketPrint({
               </p>
               {authHash ? (
                 <SeatGuard
-                  hash={authHash}
                   seatLabel={seatLabel}
                   accent={accent}
                 />
@@ -434,7 +443,7 @@ export function TicketPrint({
                       backgroundRepeat: "no-repeat",
                     }}
                   >
-                    {seatLabel.split("_")[0]}
+                    {seatParts.row}
                   </span>
                   <span
                     className="relative z-10 text-transparent bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] inline-block"
@@ -445,7 +454,7 @@ export function TicketPrint({
                       backgroundRepeat: "no-repeat",
                     }}
                   >
-                    {seatLabel.split("_")[1]}
+                    {seatParts.col}
                   </span>
                 </div>
               )}

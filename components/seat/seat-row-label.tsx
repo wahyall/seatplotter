@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 export function SeatRowLabel({
-  row,
+  label,
   compact,
 }: {
-  row: number
-  compact?: boolean
+  label: string;
+  compact?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "flex w-7 shrink-0 items-center justify-center font-mono text-[10px] font-medium text-muted-foreground",
-        compact && "w-8 text-[11px]"
+        "flex w-7 shrink-0 items-center justify-center font-mono font-medium text-[12px]",
+        compact && "w-8 text-[13px]",
       )}
     >
-      {row + 1}
+      {label}
     </div>
-  )
+  );
 }

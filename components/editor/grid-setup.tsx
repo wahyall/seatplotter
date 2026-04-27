@@ -124,12 +124,12 @@ export function GridSetup({
       <CardHeader className="space-y-2 px-4 pt-5 sm:px-6 sm:pt-6">
         <CardTitle className="flex items-start gap-2 font-display text-lg sm:items-center sm:text-xl">
           <SparklesIcon className="mt-0.5 size-5 shrink-0 text-primary sm:mt-0" />
-          <span className="min-w-0 break-words leading-snug">
+          <span className="min-w-0 wrap-break-word leading-snug">
             Setup grid — {layout.label}
           </span>
         </CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          Atur baris, kolom, huruf awal, dan opsi reverse kolom.
+          Atur baris (huruf), kolom (angka), huruf awal baris, dan opsi reverse kolom.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 px-4 pb-6 sm:space-y-8 sm:px-6 sm:pb-8">
@@ -168,7 +168,7 @@ export function GridSetup({
         </div>
 
         <div className="space-y-2">
-          <Label>Mulai dari huruf</Label>
+          <Label>Mulai dari huruf baris</Label>
           <Select
             value={colStart}
             onValueChange={(v) => v && setColStart(v)}
@@ -198,14 +198,14 @@ export function GridSetup({
                 Reverse kolom
               </Label>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Huruf terbesar di kiri, huruf awal di kanan (mis. A–J → J I H … A).
+                Angka kolom terbesar di kiri, kolom 1 di kanan (mis. 1–10 → 10 9 8 … 1).
               </p>
             </div>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm">Preview urutan kolom</Label>
+          <Label className="text-sm">Preview urutan kolom (angka)</Label>
           <div className="max-w-full overflow-x-auto rounded-xl border border-dashed border-border bg-background/80 p-3 [-webkit-overflow-scrolling:touch]">
             <p className="min-w-min whitespace-nowrap font-mono text-[10px] font-semibold tracking-wide text-foreground sm:text-xs">
               {headers.join("  ")}
