@@ -494,7 +494,7 @@ export default function BookingPage() {
           <motion.img
             src={bannerUrl}
             alt={`${pageSlug} banner`}
-            className="h-[220px] w-full object-cover will-change-transform"
+            className="h-[260px] w-full object-cover will-change-transform md:h-[300px]"
             style={{ y: bannerY }}
           />
           <div className={bookingBannerOverlayClass(themeId)} />
@@ -502,12 +502,12 @@ export default function BookingPage() {
       )}
 
       <header className={bookingHeaderClass(themeId)}>
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[1600px] items-center gap-4 px-5 py-4">
           <div className="flex-1 min-w-0">
             <h1 className={bookingTitleClass(themeId)}>
               {event?.event_name ?? "Pilih Kursi"}
             </h1>
-            <p className="text-xs text-muted-foreground tabular-nums">
+            <p className="text-sm text-muted-foreground tabular-nums md:text-base">
               {stats.available} kursi tersedia &middot; {stats.booked} terisi
             </p>
           </div>
@@ -515,26 +515,26 @@ export default function BookingPage() {
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-4 px-4 py-4">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-6 px-5 py-6">
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-4 text-sm md:text-base">
           {/* Category Colors */}
           {(activeTab === "male" ? categoriesM : categoriesF).map((c) => (
-            <span key={c.id} className="flex items-center gap-1.5">
-              <span className="inline-block size-3 rounded-sm" style={{ backgroundColor: c.color }} />
+            <span key={c.id} className="flex items-center gap-2">
+              <span className="inline-block size-4 rounded-sm" style={{ backgroundColor: c.color }} />
               {c.name}
             </span>
           ))}
           
-          <div className="mx-1 h-3 w-[1px] bg-border/60" />
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block size-3 rounded-sm bg-muted-foreground/40" />
-            <UserIcon className="size-2.5" /> Terisi
+          <div className="mx-1 h-4 w-[1px] bg-border/60" />
+          <span className="flex items-center gap-2">
+            <span className="inline-block size-4 rounded-sm bg-muted-foreground/40" />
+            <UserIcon className="size-3.5" /> Terisi
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span
               className={cn(
-                "inline-block size-3 rounded-sm ring-2 ring-offset-1",
+                "inline-block size-4 rounded-sm ring-2 ring-offset-1",
                 bookingRingOffsetClass(themeId)
               )}
               style={{
@@ -560,7 +560,7 @@ export default function BookingPage() {
                 setActiveTab("male")
               }}
               disabled={disableMaleTab}
-              className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
+              className={`rounded-md px-6 py-2.5 text-base font-semibold transition-colors duration-150 ${
                 activeTab === "male"
                   ? "text-white shadow-sm"
                   : disableMaleTab
@@ -582,7 +582,7 @@ export default function BookingPage() {
                 setActiveTab("female")
               }}
               disabled={disableFemaleTab}
-              className={`rounded-[3px] px-5 py-1.5 text-sm font-medium transition-colors duration-150 ${
+              className={`rounded-md px-6 py-2.5 text-base font-semibold transition-colors duration-150 ${
                 activeTab === "female"
                   ? "text-white shadow-sm"
                   : disableFemaleTab
@@ -601,7 +601,7 @@ export default function BookingPage() {
         </div>
 
         {/* Active Grid Layout */}
-        <div className="flex flex-col gap-6 items-stretch justify-center pb-8">
+        <div className="flex flex-col gap-7 items-stretch justify-center pb-10">
           {/* PRIA */}
           {activeTab === "male" && layoutM && (
             <div className="flex flex-col gap-4 flex-1 min-w-0">
@@ -645,7 +645,7 @@ export default function BookingPage() {
                 className="size-8 animate-spin"
                 style={{ color: effectivePrimary }}
               />
-              <p className="text-sm font-medium">{booking ? "Memproses booking..." : "Memproses..."}</p>
+              <p className="text-base font-semibold">{booking ? "Memproses booking..." : "Memproses..."}</p>
             </div>
           </div>
         )}
@@ -653,25 +653,25 @@ export default function BookingPage() {
 
       {/* Bottom Panel */}
       <div className={bookingBottomPanelClass(themeId)}>
-        <div className="mx-auto max-w-[1400px] px-4 py-3">
+        <div className="mx-auto max-w-[1600px] px-5 py-4">
           {tickets.length === 0 ? (
               <button
                 type="button"
                 onClick={() => setShowScanner(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95"
+                className="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-md px-5 py-3 text-base font-semibold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95"
                 style={{ backgroundColor: effectivePrimary }}
               >
-              <QrCodeIcon className="size-4" />
+              <QrCodeIcon className="size-5" />
               Scan Tiket PDF
             </button>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {unbookedTickets.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  <p className="mb-2 text-sm font-medium text-muted-foreground md:text-base">
                     Pilih tiket, lalu tap kursi yang tersedia:
                   </p>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
+                  <div className="flex gap-3 overflow-x-auto pb-1">
                     {unbookedTickets.map((t) => {
                       const isSelected = selectedTicketId === t.id
                       return (
@@ -686,7 +686,7 @@ export default function BookingPage() {
                               }
                             }}
                             className={cn(
-                              "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors duration-150",
+                              "flex min-h-12 w-full items-center gap-2.5 rounded-md border px-4 py-3 text-left text-sm transition-colors duration-150 md:text-base",
                               isSelected ? "" : bookingTicketCardIdleClass(themeId)
                             )}
                             style={
@@ -699,12 +699,12 @@ export default function BookingPage() {
                             }
                           >
                             <TicketIcon
-                              className="size-3.5 shrink-0"
+                              className="size-4 shrink-0"
                               style={{ color: effectivePrimary }}
                             />
                             <div className="min-w-0">
                               <p className="truncate font-medium">{t.nama}</p>
-                              <p className="text-[10px] text-muted-foreground">{t.tiket}</p>
+                              <p className="text-xs text-muted-foreground md:text-sm">{t.tiket}</p>
                             </div>
                           </button>
                         </div>
@@ -772,10 +772,10 @@ export default function BookingPage() {
                           }
                         }
                       }}
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-bold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50"
+                      className="mt-3 flex min-h-12 w-full items-center justify-center gap-2.5 rounded-md py-3 text-base font-bold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50"
                       style={{ backgroundColor: effectivePrimary }}
                     >
-                      {booking ? <Loader2Icon className="size-4 animate-spin" /> : <CheckCircle2Icon className="size-4" />}
+                      {booking ? <Loader2Icon className="size-5 animate-spin" /> : <CheckCircle2Icon className="size-5" />}
                       SIMPAN PILIHAN KURSI
                     </button>
                   )}
@@ -783,19 +783,19 @@ export default function BookingPage() {
               )}
 
               {bookedTickets.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <button
                     type="button"
                     disabled={downloadingAllPdf}
                     onClick={() => void downloadAllBookedTicketsPdf()}
-                    className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-bold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:pointer-events-none"
+                    className="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-md px-5 py-3 text-base font-bold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:pointer-events-none"
                     style={{ backgroundColor: effectivePrimary }}
                     title="Satu file PDF berisi semua tiket tersimpan"
                   >
                     {downloadingAllPdf ? (
-                      <Loader2Icon className="size-4 shrink-0 animate-spin" />
+                      <Loader2Icon className="size-5 shrink-0 animate-spin" />
                     ) : (
-                      <DownloadIcon className="size-4 shrink-0" />
+                      <DownloadIcon className="size-5 shrink-0" />
                     )}
                     {downloadingAllPdf ? "Mengunduh…" : "Unduh PDF (semua tiket)"}
                   </button>
@@ -831,18 +831,18 @@ export default function BookingPage() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setShowScanner(true)}
                   className={bookingSecondaryButtonClass(themeId)}
                 >
-                  <QrCodeIcon className="size-3" />
+                  <QrCodeIcon className="size-4" />
                   Scan lagi
                 </button>
                 {unbookedTickets.length === 0 && bookedTickets.length > 0 && (
                   <span className={bookingCompletionTextClass(themeId)}>
-                    <SparklesIcon className="size-3" />
+                    <SparklesIcon className="size-4" />
                     Semua tiket sudah memiliki kursi!
                   </span>
                 )}
@@ -868,10 +868,10 @@ export default function BookingPage() {
               exit={{ scale: 0.97, opacity: 0 }}
               className={bookingModalCardClass(themeId)}
             >
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 font-display text-base font-bold">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="flex items-center gap-2.5 font-display text-lg font-bold">
                   <QrCodeIcon
-                    className="size-4"
+                    className="size-5"
                     style={{ color: effectivePrimary }}
                   />
                   Scan Tiket PDF
@@ -879,7 +879,7 @@ export default function BookingPage() {
                 {tickets.length > 0 && (
                   <button
                     onClick={() => setShowScanner(false)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     <XIcon className="size-5" />
                   </button>
@@ -889,7 +889,7 @@ export default function BookingPage() {
               <label
                 htmlFor="scan-pdf-upload"
                 className={cn(
-                  "flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed px-6 py-8 transition-colors duration-150",
+                  "flex cursor-pointer flex-col items-center gap-4 rounded-md border-2 border-dashed px-7 py-10 transition-colors duration-150",
                   scanning
                     ? ""
                     : themeId === "reconnect"
@@ -908,24 +908,24 @@ export default function BookingPage() {
                 }
               >
                 {scanning ? (
-                  <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-col items-center gap-4">
                     <ScanLineIcon
-                      className="size-10 animate-pulse"
+                      className="size-12 animate-pulse"
                       style={{ color: effectivePrimary }}
                     />
-                    <p className="text-sm font-medium">Scanning...</p>
+                    <p className="text-base font-semibold">Scanning...</p>
                     {scanProgress && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         Halaman {scanProgress.current} / {scanProgress.total} · {scanProgress.found} QR
                       </p>
                     )}
                   </div>
                 ) : (
                   <>
-                    <UploadIcon className="size-8 text-muted-foreground" />
+                    <UploadIcon className="size-10 text-muted-foreground" />
                     <div className="text-center">
-                      <p className="text-sm font-medium">Upload PDF tiket</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="text-base font-semibold">Upload PDF tiket</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Bisa pilih beberapa file sekaligus
                       </p>
                     </div>
