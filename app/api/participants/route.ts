@@ -1,3 +1,4 @@
+import { getPartnerEventSlug } from "@/lib/import-mirror-pair-slugs"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
 interface ParticipantInput {
@@ -33,6 +34,8 @@ export async function POST(req: Request) {
     )
   }
 
+  const importAllEvents = body.import_all_events === true
+
   const participants: ParticipantInput[] = body.participants
 
   const valid = participants.filter((p) => p.nama && p.nama.trim() !== "")
@@ -43,44 +46,85 @@ export async function POST(req: Request) {
     )
   }
 
-  if (body.replace === true) {
-    const { error: delErr } = await supabaseAdmin
-      .from("participants")
-      .delete()
-      .eq("event_id", eventId)
-    if (delErr) {
+  const targetEventIds: string[] = [eventId]
+  if (importAllEvents) {
+    const { data: ev, error: evErr } = await supabaseAdmin
+      .from("events")
+      .select("slug")
+      .eq("id", eventId)
+      .single()
+    if (evErr) {
       return Response.json(
-        { success: false, error: delErr.message },
+        { success: false, error: evErr.message },
         { status: 500 }
       )
+    }
+    const partnerSlug = getPartnerEventSlug(ev?.slug)
+    if (partnerSlug) {
+      const { data: other, error: oErr } = await supabaseAdmin
+        .from("events")
+        .select("id")
+        .eq("slug", partnerSlug)
+        .maybeSingle()
+      if (oErr) {
+        return Response.json(
+          { success: false, error: oErr.message },
+          { status: 500 }
+        )
+      }
+      if (other?.id) {
+        targetEventIds.push(other.id)
+      }
+    }
+  }
+  const uniqueEventIds = [...new Set(targetEventIds)]
+
+  if (body.replace === true) {
+    for (const eid of uniqueEventIds) {
+      const { error: delErr } = await supabaseAdmin
+        .from("participants")
+        .delete()
+        .eq("event_id", eid)
+      if (delErr) {
+        return Response.json(
+          { success: false, error: delErr.message },
+          { status: 500 }
+        )
+      }
     }
   }
 
   const CHUNK = 500
-  let inserted = 0
-  for (let i = 0; i < valid.length; i += CHUNK) {
-    const chunk = valid.slice(i, i + CHUNK).map((p) => ({
-      nama: p.nama.trim(),
-      email: (p.email ?? "").trim(),
-      jenis_kelamin: (p.jenis_kelamin ?? "").trim(),
-      telepon: String(p.telepon ?? "").trim(),
-      tiket: (p.tiket ?? "").trim().replace(/\s*-\s*\(.*?\)\s*$/, ""),
-      kode_tiket: (p.kode_tiket ?? "").trim(),
-      event_id: eventId,
-    }))
-    const { error } = await supabaseAdmin.from("participants").insert(chunk)
-    if (error) {
-      return Response.json(
-        { success: false, error: error.message, inserted },
-        { status: 500 }
-      )
+  let dbRowCount = 0
+  for (const targetId of uniqueEventIds) {
+    for (let i = 0; i < valid.length; i += CHUNK) {
+      const chunk = valid.slice(i, i + CHUNK).map((p) => ({
+        nama: p.nama.trim(),
+        email: (p.email ?? "").trim(),
+        jenis_kelamin: (p.jenis_kelamin ?? "").trim(),
+        telepon: String(p.telepon ?? "").trim(),
+        tiket: (p.tiket ?? "").trim().replace(/\s*-\s*\(.*?\)\s*$/, ""),
+        kode_tiket: (p.kode_tiket ?? "").trim(),
+        event_id: targetId,
+      }))
+      const { error } = await supabaseAdmin.from("participants").insert(chunk)
+      if (error) {
+        return Response.json(
+          { success: false, error: error.message, inserted: valid.length, dbRowCount },
+          { status: 500 }
+        )
+      }
+      dbRowCount += chunk.length
     }
-    inserted += chunk.length
   }
 
   return Response.json({
     success: true,
-    data: { inserted },
+    data: {
+      inserted: valid.length,
+      event_targets: uniqueEventIds.length,
+      total_db_rows: dbRowCount,
+    },
   })
 }
 

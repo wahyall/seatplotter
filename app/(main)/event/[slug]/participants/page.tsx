@@ -5,6 +5,8 @@ import { toast } from "sonner"
 import * as XLSX from "xlsx"
 import type { ParticipantRow } from "@/types/db"
 import { downloadParticipantQrPdf } from "@/lib/participant-qr-pdf"
+import { getPartnerEventSlug } from "@/lib/import-mirror-pair-slugs"
+import { isSupabaseConfigured, supabase } from "@/lib/supabase"
 import { useLayoutStore } from "@/store/useLayoutStore"
 import {
   Card,
@@ -16,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -28,14 +31,12 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  FileSpreadsheetIcon,
   UploadIcon,
   Trash2Icon,
   SaveIcon,
   CheckCircle2Icon,
   AlertCircleIcon,
   SearchIcon,
-  FilterIcon,
   UsersIcon,
   XIcon,
   DownloadIcon,
@@ -162,6 +163,8 @@ export default function ImportParticipantsPage() {
   const [ticketTypes, setTicketTypes] = React.useState<string[]>([])
   const [stats, setStats] = React.useState<Record<string, number>>({})
   const [pdfLoadingId, setPdfLoadingId] = React.useState<string | null>(null)
+  const [importToAllEvents, setImportToAllEvents] = React.useState(false)
+  const [mirrorEventName, setMirrorEventName] = React.useState<string | null>(null)
 
   async function handleDownloadQrPdf(p: ParticipantRow) {
     setPdfLoadingId(p.id)
@@ -183,6 +186,28 @@ export default function ImportParticipantsPage() {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  const partnerSlug = getPartnerEventSlug(event?.slug)
+  React.useEffect(() => {
+    if (!isSupabaseConfigured || !partnerSlug) {
+      setMirrorEventName(null)
+      setImportToAllEvents(false)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("event_name")
+        .eq("slug", partnerSlug)
+        .maybeSingle()
+      if (cancelled) return
+      setMirrorEventName(data?.event_name?.trim() || null)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [partnerSlug])
 
   /* ---------- load saved participants ---------- */
   React.useEffect(() => {
@@ -303,13 +328,22 @@ export default function ImportParticipantsPage() {
           participants: mappedData.filter((p) => p.nama.trim()),
           replace,
           event_id: eventId,
+          import_all_events: importToAllEvents,
         }),
       })
       setSaveProgress(80)
       const json = await res.json()
 
       if (json.success) {
-        toast.success(`${json.data.inserted} peserta berhasil disimpan`)
+        const n = json.data?.inserted ?? 0
+        const t = json.data?.event_targets ?? 1
+        if (t > 1) {
+          toast.success(
+            `${n} peserta per acara disimpan (${t} acara, total ${json.data?.total_db_rows ?? n * t} baris)`
+          )
+        } else {
+          toast.success(`${n} peserta berhasil disimpan`)
+        }
         clearFile()
         await fetchParticipants()
         setSaveProgress(100)
@@ -549,6 +583,30 @@ export default function ImportParticipantsPage() {
             </Card>
 
             {/* Save Actions */}
+            <div className="space-y-3">
+            {partnerSlug && (
+              <label
+                className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/80 bg-muted/20 p-3 text-sm"
+              >
+                <Checkbox
+                  checked={importToAllEvents}
+                  onCheckedChange={(v) => setImportToAllEvents(v === true)}
+                  className="mt-0.5"
+                />
+                <div className="space-y-0.5">
+                  <span className="font-medium leading-tight">Import ke semua acara</span>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Jika diaktifkan, daftar yang sama juga disimpan ke
+                    {mirrorEventName ? (
+                      <span className="text-foreground"> {mirrorEventName}</span>
+                    ) : (
+                      " acara terhubung"
+                    )}
+                    . Matikan hanya jika data ini khusus untuk acara saat ini.
+                  </p>
+                </div>
+              </label>
+            )}
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 onClick={() => handleSave(true)}
@@ -574,6 +632,7 @@ export default function ImportParticipantsPage() {
                   <Progress value={saveProgress} className="h-2" />
                 </div>
               )}
+            </div>
             </div>
           </div>
       )}
