@@ -622,7 +622,7 @@ export default function BookingPage() {
           {/* WANITA */}
           {activeTab === "female" && layoutF && (
             <div className="flex flex-col gap-4 flex-1 min-w-0">
-              <StageBar label="STAGE" className={cn(bookingStageBarClass(themeId), activeTab === "female" && "w-[150%] -translate-x-[33%] [--translate-x:-110px]")} />
+              <StageBar label="STAGE" className={cn(bookingStageBarClass(themeId), activeTab === "female" && "w-[150%] -translate-x-[33%] [--translate-x:110px]")} />
               <SeatGrid
                 seats={displaySeatsF}
                 layout={layoutF}
