@@ -127,7 +127,7 @@ export function GridSetup({
       <CardContent className="space-y-6 px-4 pb-6 sm:space-y-8 sm:px-6 sm:pb-8">
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <Label className="text-sm">Jumlah baris</Label>
+            <Label className="text-sm">Jumlah baris (Huruf)</Label>
             <span className="text-sm font-medium tabular-nums">{rows}</span>
           </div>
           <Slider
@@ -144,7 +144,7 @@ export function GridSetup({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <Label className="text-sm">Jumlah kolom</Label>
+            <Label className="text-sm">Jumlah kolom (Angka)</Label>
             <span className="text-sm font-medium tabular-nums">{cols}</span>
           </div>
           <Slider
