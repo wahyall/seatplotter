@@ -145,8 +145,8 @@ export async function POST(req: Request) {
     .from("seats")
     .update({
       participant_id,
-      is_checked: true,
-      checked_at: new Date().toISOString(),
+      // is_checked: true,
+      // checked_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq("id", seat_id)
@@ -159,8 +159,8 @@ export async function POST(req: Request) {
         .from("seats")
         .update({
           participant_id,
-          is_checked: true,
-          checked_at: new Date().toISOString(),
+          // is_checked: true,
+          // checked_at: new Date().toISOString(),
         })
         .eq("id", old_seat_id)
         .is("participant_id", null);
@@ -191,8 +191,8 @@ export async function POST(req: Request) {
         .from("seats")
         .update({
           participant_id,
-          is_checked: true,
-          checked_at: new Date().toISOString(),
+          // is_checked: true,
+          // checked_at: new Date().toISOString(),
         })
         .eq("id", old_seat_id)
         .is("participant_id", null);
@@ -233,8 +233,8 @@ export async function POST(req: Request) {
         .from("seats")
         .update({
           participant_id,
-          is_checked: true,
-          checked_at: new Date().toISOString(),
+          // is_checked: true,
+          // checked_at: new Date().toISOString(),
         })
         .eq("id", old_seat_id)
         .is("participant_id", null);
