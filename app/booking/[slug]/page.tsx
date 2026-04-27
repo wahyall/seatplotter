@@ -46,7 +46,6 @@ import {
   bookingLoaderShellClass,
   bookingBookedPillClass,
   bookingBookedPillBadgeClass,
-  bookingBookedDownloadBtnClass,
   bookingCompletionTextClass,
   bookingSecondaryButtonClass,
   bookingOverlayBlockClass,
@@ -98,6 +97,7 @@ export default function BookingPage() {
   const [selectedTicketId, setSelectedTicketId] = React.useState<string | null>(null)
   const [booking, setBooking] = React.useState(false)
   const [microLoading, setMicroLoading] = React.useState(false)
+  const [downloadingAllPdf, setDownloadingAllPdf] = React.useState(false)
   const isProcessingRef = React.useRef(false)
   const [activeTab, setActiveTab] = React.useState<Gender>("male")
   const [authHashes, setAuthHashes] = React.useState<Record<string, string>>({})
@@ -449,6 +449,7 @@ export default function BookingPage() {
       .filter((t) => t.already_booked && t.seat_id)
       .map((t) => t.id)
     if (ids.length === 0) return
+    setDownloadingAllPdf(true)
     try {
       await new Promise((r) => setTimeout(r, 400))
       await exportBookingTicketsPdf({
@@ -458,6 +459,8 @@ export default function BookingPage() {
     } catch (e) {
       console.error(e)
       toast.error("Gagal membuat PDF tiket.")
+    } finally {
+      setDownloadingAllPdf(false)
     }
   }, [tickets, event?.event_name, pageSlug])
 
@@ -781,20 +784,21 @@ export default function BookingPage() {
 
               {bookedTickets.length > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => void downloadAllBookedTicketsPdf()}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium",
-                        bookingSecondaryButtonClass(themeId)
-                      )}
-                      title="Satu file PDF berisi semua tiket tersimpan"
-                    >
-                      <DownloadIcon className="size-3.5" />
-                      Unduh PDF (semua tiket)
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    disabled={downloadingAllPdf}
+                    onClick={() => void downloadAllBookedTicketsPdf()}
+                    className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-bold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:pointer-events-none"
+                    style={{ backgroundColor: effectivePrimary }}
+                    title="Satu file PDF berisi semua tiket tersimpan"
+                  >
+                    {downloadingAllPdf ? (
+                      <Loader2Icon className="size-4 shrink-0 animate-spin" />
+                    ) : (
+                      <DownloadIcon className="size-4 shrink-0" />
+                    )}
+                    {downloadingAllPdf ? "Mengunduh…" : "Unduh PDF (semua tiket)"}
+                  </button>
                   <div className="flex flex-wrap gap-2">
                     {bookedTickets.map((t) => {
                       const seatId = t.seat_id

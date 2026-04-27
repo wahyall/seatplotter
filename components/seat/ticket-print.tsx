@@ -359,7 +359,7 @@ export function TicketPrint({
             className="absolute inset-0 w-full h-full object-cover"
           />
           {/* Dark overlay for legibility */}
-          <div className="absolute inset-0 bg-black/80" />
+          <div className="absolute inset-0 bg-black/70" />
           <div
             className="absolute inset-x-0 top-0 h-px z-10"
             style={{ background: headerAccentLine }}
