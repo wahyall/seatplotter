@@ -1,4 +1,5 @@
 import * as React from "react";
+import QRCode from "qrcode";
 import { ValidatedTicket } from "@/lib/booking";
 import { EventRow } from "@/types/db";
 import { eventPrimaryColor } from "@/lib/event-color";
@@ -8,6 +9,58 @@ import {
   generateMicrotextPath,
   generateIdenticon,
 } from "@/lib/ticket-pattern";
+
+const KODE_TIKET_QR_PX = 88;
+
+function KodeTiketQr({ code }: { code: string }) {
+  const [dataUrl, setDataUrl] = React.useState<string | null>(null);
+  const trimmed = code.trim();
+  React.useEffect(() => {
+    if (!trimmed) {
+      setDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void QRCode.toDataURL(trimmed, {
+      width: KODE_TIKET_QR_PX,
+      margin: 1,
+      color: { dark: "#0a0a0a", light: "#ffffff" },
+      errorCorrectionLevel: "M",
+    }).then((url) => {
+      if (!cancelled) setDataUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [trimmed]);
+  if (!trimmed) {
+    return (
+      <p className="text-white/40 text-xs font-mono" aria-hidden>
+        —
+      </p>
+    );
+  }
+  if (!dataUrl) {
+    return (
+      <div
+        className="bg-white/10 rounded border border-white/10"
+        style={{ width: KODE_TIKET_QR_PX, height: KODE_TIKET_QR_PX }}
+        aria-hidden
+      />
+    );
+  }
+  return (
+    // data: URL from qrcode — not a static import; next/image offers no real benefit
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={dataUrl}
+      alt=""
+      width={KODE_TIKET_QR_PX}
+      height={KODE_TIKET_QR_PX}
+      className="rounded bg-white p-1.5"
+    />
+  );
+}
 
 interface TicketPrintProps {
   ticket: ValidatedTicket;
@@ -349,12 +402,10 @@ export function TicketPrint({
           {/* Footer Details */}
           <div className="flex w-full items-end justify-between pt-2">
             <div className="flex flex-col items-start gap-1">
-              <p className="text-white/40 text-[10px] uppercase font-bold tracking-[0.2em]">
+              {/* <p className="text-white/40 text-[10px] uppercase font-bold tracking-[0.2em]">
                 KODE TIKET
-              </p>
-              <p className="text-white/80 font-mono text-sm font-medium tracking-wider">
-                {ticket.kode_tiket}
-              </p>
+              </p> */}
+              <KodeTiketQr code={ticket.kode_tiket ?? ""} />
             </div>
 
             {authHash && <IdenticonBlock hash={authHash} />}

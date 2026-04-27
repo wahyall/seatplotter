@@ -28,7 +28,7 @@ import {
   DownloadIcon,
 } from "lucide-react"
 import { TicketPrint } from "@/components/seat/ticket-print"
-import { exportTicketPNG } from "@/lib/export-png"
+import { exportBookingTicketsPdf } from "@/lib/export-booking-tickets-pdf"
 import { eventPrimaryColor, primaryMutedWash } from "@/lib/event-color"
 import {
   getBookingThemeId,
@@ -444,6 +444,23 @@ export default function BookingPage() {
     }
   }
 
+  const downloadAllBookedTicketsPdf = React.useCallback(async () => {
+    const ids = tickets
+      .filter((t) => t.already_booked && t.seat_id)
+      .map((t) => t.id)
+    if (ids.length === 0) return
+    try {
+      await new Promise((r) => setTimeout(r, 400))
+      await exportBookingTicketsPdf({
+        ticketIds: ids,
+        fileBase: `tiket-${event?.event_name ?? pageSlug}`,
+      })
+    } catch (e) {
+      console.error(e)
+      toast.error("Gagal membuat PDF tiket.")
+    }
+  }, [tickets, event?.event_name, pageSlug])
+
   if (!hydrated) {
     return (
       <div className={bookingLoaderShellClass(themeId)}>
@@ -730,6 +747,23 @@ export default function BookingPage() {
 
                         if (allSuccess) {
                           toast.success("Semua kursi berhasil disimpan permanen!")
+                          const ticketIds = newMerged
+                            .filter((t) => t.already_booked && t.seat_id)
+                            .map((t) => t.id)
+                          if (ticketIds.length > 0) {
+                            await new Promise((r) => setTimeout(r, 800))
+                            try {
+                              await exportBookingTicketsPdf({
+                                ticketIds,
+                                fileBase: `tiket-${event?.event_name ?? pageSlug}`,
+                              })
+                            } catch (e) {
+                              console.error(e)
+                              toast.error(
+                                "Gagal mengunduh PDF tiket otomatis. Gunakan tombol unduh di bawah."
+                              )
+                            }
+                          }
                         }
                       }}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-bold text-white shadow-md transition-[opacity,filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50"
@@ -743,36 +777,50 @@ export default function BookingPage() {
               )}
 
               {bookedTickets.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {bookedTickets.map((t) => {
-                    const seatId = t.seat_id
-                    let seatLabel = "-"
-                    if (t.jenis_kelamin === "MALE") {
-                      seatLabel = seatsM.find((s) => s.id === seatId)?.label ?? "-"
-                    } else {
-                      seatLabel = seatsF.find((s) => s.id === seatId)?.label ?? "-"
-                    }
-                    return (
-                      <span
-                        key={t.id}
-                        className={bookingBookedPillClass(themeId)}
-                      >
-                        <CheckCircle2Icon className="size-3" />
-                        {t.nama}
-                        <span className={bookingBookedPillBadgeClass(themeId)}>
-                          Kursi: {seatLabel}
-                        </span>
-                        <button
-                          onClick={() => exportTicketPNG(t.id, t.nama)}
-                          className={bookingBookedDownloadBtnClass(themeId)}
-                          title="Download Tiket"
+                <div className="space-y-2">
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => void downloadAllBookedTicketsPdf()}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium",
+                        bookingSecondaryButtonClass(themeId)
+                      )}
+                      title="Satu file PDF berisi semua tiket tersimpan"
+                    >
+                      <DownloadIcon className="size-3.5" />
+                      Unduh PDF (semua tiket)
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {bookedTickets.map((t) => {
+                      const seatId = t.seat_id
+                      let seatLabel = "-"
+                      if (t.jenis_kelamin === "MALE") {
+                        seatLabel = seatsM.find((s) => s.id === seatId)?.label ?? "-"
+                      } else {
+                        seatLabel = seatsF.find((s) => s.id === seatId)?.label ?? "-"
+                      }
+                      return (
+                        <span
+                          key={t.id}
+                          className={bookingBookedPillClass(themeId)}
                         >
-                          <DownloadIcon className="size-3" />
-                        </button>
-                        <TicketPrint ticket={t} seatLabel={seatLabel} event={event} authHash={authHashes[t.id]} />
-                      </span>
-                    )
-                  })}
+                          <CheckCircle2Icon className="size-3" />
+                          {t.nama}
+                          <span className={bookingBookedPillBadgeClass(themeId)}>
+                            Kursi: {seatLabel}
+                          </span>
+                          <TicketPrint
+                            ticket={t}
+                            seatLabel={seatLabel}
+                            event={event}
+                            authHash={authHashes[t.id]}
+                          />
+                        </span>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 
