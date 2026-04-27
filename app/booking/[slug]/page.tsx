@@ -474,6 +474,8 @@ export default function BookingPage() {
 
   const unbookedTickets = tickets.filter((t) => !t.already_booked)
   const bookedTickets = tickets.filter((t) => t.already_booked)
+  const allUnbookedTicketsPlotted =
+    unbookedTickets.length > 0 && unbookedTickets.every((t) => Boolean(t.seat_id))
   const selectedTicket = selectedTicketId
     ? tickets.find((t) => t.id === selectedTicketId) ?? null
     : null
@@ -712,7 +714,7 @@ export default function BookingPage() {
                     })}
                   </div>
 
-                  {unbookedTickets.some((t) => t.seat_id) && (
+                  {allUnbookedTicketsPlotted && (
                     <button
                       disabled={booking}
                       onClick={async () => {
