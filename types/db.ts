@@ -63,6 +63,7 @@ export interface ParticipantRow {
   email: string
   jenis_kelamin: string
   telepon: string
+  telepon_pemesan: string
   tiket: string
   kode_tiket: string
   seat_id: string | null

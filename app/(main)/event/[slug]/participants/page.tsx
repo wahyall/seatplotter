@@ -1,35 +1,35 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { toast } from "sonner"
-import * as XLSX from "xlsx"
-import type { ParticipantRow } from "@/types/db"
-import { downloadParticipantQrPdf } from "@/lib/participant-qr-pdf"
-import { getPartnerEventSlug } from "@/lib/import-mirror-pair-slugs"
-import { isSupabaseConfigured, supabase } from "@/lib/supabase"
-import { useLayoutStore } from "@/store/useLayoutStore"
+import * as React from "react";
+import { toast } from "sonner";
+import * as XLSX from "xlsx";
+import type { ParticipantRow } from "@/types/db";
+import { downloadParticipantQrPdf } from "@/lib/participant-qr-pdf";
+import { getPartnerEventSlug } from "@/lib/import-mirror-pair-slugs";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { useLayoutStore } from "@/store/useLayoutStore";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   UploadIcon,
   Trash2Icon,
@@ -48,17 +48,19 @@ import {
   ChevronsRightIcon,
   QrCodeIcon,
   Loader2Icon,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+  MessageCircleIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /* ---------- column-mapping types ---------- */
 interface ColumnMapping {
-  nama: string
-  email: string
-  jenis_kelamin: string
-  telepon: string
-  tiket: string
-  kode_tiket: string
+  nama: string;
+  email: string;
+  jenis_kelamin: string;
+  telepon: string;
+  telepon_pemesan: string;
+  tiket: string;
+  kode_tiket: string;
 }
 
 const FIELD_LABELS: Record<keyof ColumnMapping, string> = {
@@ -66,31 +68,33 @@ const FIELD_LABELS: Record<keyof ColumnMapping, string> = {
   email: "Email",
   jenis_kelamin: "Jenis Kelamin",
   telepon: "Telepon",
+  telepon_pemesan: "Telepon Pemesan",
   tiket: "Tiket",
   kode_tiket: "Kode Tiket",
-}
+};
 
 const FIELD_ICONS: Record<keyof ColumnMapping, React.ReactNode> = {
   nama: <UsersIcon className="size-3.5" />,
   email: <span className="text-xs">@</span>,
   jenis_kelamin: <span className="text-xs">⚥</span>,
   telepon: <span className="text-xs">📞</span>,
+  telepon_pemesan: <span className="text-xs">📱</span>,
   tiket: <TicketIcon className="size-3.5" />,
   kode_tiket: <span className="text-xs">#</span>,
-}
+};
 
 /* ---------- helpers ---------- */
 function guessColumn(headers: string[], keywords: string[]): string {
-  const lower = headers.map((h) => h.toLowerCase().trim())
+  const lower = headers.map((h) => h.toLowerCase().trim());
   for (const kw of keywords) {
-    const idx = lower.findIndex((h) => h === kw)
-    if (idx >= 0) return headers[idx]
+    const idx = lower.findIndex((h) => h === kw);
+    if (idx >= 0) return headers[idx];
   }
   for (const kw of keywords) {
-    const idx = lower.findIndex((h) => h.includes(kw))
-    if (idx >= 0) return headers[idx]
+    const idx = lower.findIndex((h) => h.includes(kw));
+    if (idx >= 0) return headers[idx];
   }
-  return ""
+  return "";
 }
 
 function autoMap(headers: string[]): ColumnMapping {
@@ -115,7 +119,22 @@ function autoMap(headers: string[]): ColumnMapping {
       "no. telp",
       "nomor telepon",
     ]),
-    tiket: guessColumn(headers, ["tiket", "ticket", "jenis tiket", "ticket type"]),
+    telepon_pemesan: guessColumn(headers, [
+      "telepon pemesan",
+      "telp pemesan",
+      "nomor pemesan",
+      "no pemesan",
+      "no. pemesan",
+      "telepon pembeli",
+      "orderer phone",
+      "booker phone",
+    ]),
+    tiket: guessColumn(headers, [
+      "tiket",
+      "ticket",
+      "jenis tiket",
+      "ticket type",
+    ]),
     kode_tiket: guessColumn(headers, [
       "kode tiket",
       "kode ticket",
@@ -124,98 +143,137 @@ function autoMap(headers: string[]): ColumnMapping {
       "kode voucher",
       "kode",
     ]),
-  }
+  };
 }
 
 /* ---------- main component ---------- */
 export default function ImportParticipantsPage() {
-  const event = useLayoutStore((s) => s.event)
-  const eventId = event?.id ?? ""
-  const eventTitle = event?.event_name ?? ""
+  const event = useLayoutStore((s) => s.event);
+  const eventId = event?.id ?? "";
+  const eventTitle = event?.event_name ?? "";
 
-  const [file, setFile] = React.useState<File | null>(null)
-  const [headers, setHeaders] = React.useState<string[]>([])
-  const [rawRows, setRawRows] = React.useState<Record<string, string>[]>([])
+  const [file, setFile] = React.useState<File | null>(null);
+  const [headers, setHeaders] = React.useState<string[]>([]);
+  const [rawRows, setRawRows] = React.useState<Record<string, string>[]>([]);
   const [mapping, setMapping] = React.useState<ColumnMapping>({
     nama: "",
     email: "",
     jenis_kelamin: "",
     telepon: "",
+    telepon_pemesan: "",
     tiket: "",
     kode_tiket: "",
-  })
+  });
 
   // saved participants from DB
-  const [participants, setParticipants] = React.useState<ParticipantRow[]>([])
-  const [loadingDb, setLoadingDb] = React.useState(true)
-  const [saving, setSaving] = React.useState(false)
-  const [saveProgress, setSaveProgress] = React.useState(0)
+  const [participants, setParticipants] = React.useState<ParticipantRow[]>([]);
+  const [loadingDb, setLoadingDb] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [saveProgress, setSaveProgress] = React.useState(0);
 
   // filter/search for saved table
-  const [search, setSearch] = React.useState("")
-  const [ticketFilter, setTicketFilter] = React.useState("all")
+  const [search, setSearch] = React.useState("");
+  const [ticketFilter, setTicketFilter] = React.useState("all");
 
   // pagination & filter states
-  const [page, setPage] = React.useState(1)
-  const [perPage, setPerPage] = React.useState(25)
-  const [totalItems, setTotalItems] = React.useState(0)
-  const [totalAll, setTotalAll] = React.useState(0)
-  const [ticketTypes, setTicketTypes] = React.useState<string[]>([])
-  const [stats, setStats] = React.useState<Record<string, number>>({})
-  const [pdfLoadingId, setPdfLoadingId] = React.useState<string | null>(null)
-  const [importToAllEvents, setImportToAllEvents] = React.useState(false)
-  const [mirrorEventName, setMirrorEventName] = React.useState<string | null>(null)
+  const [page, setPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(25);
+  const [totalItems, setTotalItems] = React.useState(0);
+  const [totalAll, setTotalAll] = React.useState(0);
+  const [ticketTypes, setTicketTypes] = React.useState<string[]>([]);
+  const [stats, setStats] = React.useState<Record<string, number>>({});
+  const [pdfLoadingId, setPdfLoadingId] = React.useState<string | null>(null);
+  const [importToAllEvents, setImportToAllEvents] = React.useState(false);
+  const [mirrorEventName, setMirrorEventName] = React.useState<string | null>(
+    null,
+  );
+
+  /** Unique Telepon Pemesan count + WhatsApp bridge env configured (server-side). */
+  const [waReminderStats, setWaReminderStats] = React.useState<{
+    unique_count: number;
+    whatsapp_configured: boolean;
+  } | null>(null);
+  const [waSending, setWaSending] = React.useState(false);
+
+  const fetchWaReminderStats = React.useCallback(async () => {
+    if (!eventId) {
+      setWaReminderStats(null);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/participants/whatsapp-reminders?event_id=${encodeURIComponent(eventId)}`,
+      );
+      const json = await res.json();
+      if (json.success && json.data) {
+        setWaReminderStats({
+          unique_count: json.data.unique_count ?? 0,
+          whatsapp_configured: json.data.whatsapp_configured ?? false,
+        });
+      }
+    } catch {
+      setWaReminderStats(null);
+    }
+  }, [eventId]);
 
   async function handleDownloadQrPdf(p: ParticipantRow) {
-    setPdfLoadingId(p.id)
+    setPdfLoadingId(p.id);
     try {
       await downloadParticipantQrPdf(p, {
         eventTitle: eventTitle || undefined,
-      })
-      toast.success("PDF berhasil diunduh")
+      });
+      toast.success("PDF berhasil diunduh");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal membuat PDF")
+      toast.error(err instanceof Error ? err.message : "Gagal membuat PDF");
     } finally {
-      setPdfLoadingId(null)
+      setPdfLoadingId(null);
     }
   }
 
   // debounce search
-  const [debouncedSearch, setDebouncedSearch] = React.useState("")
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
   React.useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
-    return () => clearTimeout(timer)
-  }, [search])
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const partnerSlug = getPartnerEventSlug(event?.slug)
+  const partnerSlug = getPartnerEventSlug(event?.slug);
   React.useEffect(() => {
     if (!isSupabaseConfigured || !partnerSlug) {
-      setMirrorEventName(null)
-      setImportToAllEvents(false)
-      return
+      setMirrorEventName(null);
+      setImportToAllEvents(false);
+      return;
     }
-    let cancelled = false
+    let cancelled = false;
     void (async () => {
       const { data } = await supabase
         .from("events")
         .select("event_name")
         .eq("slug", partnerSlug)
-        .maybeSingle()
-      if (cancelled) return
-      setMirrorEventName(data?.event_name?.trim() || null)
-    })()
+        .maybeSingle();
+      if (cancelled) return;
+      setMirrorEventName(data?.event_name?.trim() || null);
+    })();
     return () => {
-      cancelled = true
+      cancelled = true;
+    };
+  }, [partnerSlug]);
+
+  React.useEffect(() => {
+    if (!eventId) {
+      setWaReminderStats(null);
+      return;
     }
-  }, [partnerSlug])
+    void fetchWaReminderStats();
+  }, [eventId, fetchWaReminderStats]);
 
   /* ---------- load saved participants ---------- */
   React.useEffect(() => {
-    if (eventId) fetchParticipants()
-  }, [page, perPage, debouncedSearch, ticketFilter, eventId])
+    if (eventId) fetchParticipants();
+  }, [page, perPage, debouncedSearch, ticketFilter, eventId]);
 
   async function fetchParticipants() {
-    setLoadingDb(true)
+    setLoadingDb(true);
     try {
       const qs = new URLSearchParams({
         page: String(page),
@@ -223,77 +281,125 @@ export default function ImportParticipantsPage() {
         search: debouncedSearch,
         tiket: ticketFilter === "all" ? "" : ticketFilter,
         event_id: eventId,
-      })
-      const res = await fetch(`/api/participants?${qs.toString()}`)
-      const json = await res.json()
+      });
+      const res = await fetch(`/api/participants?${qs.toString()}`);
+      const json = await res.json();
       if (json.success) {
-        setParticipants(json.data ?? [])
-        setTotalItems(json.total ?? 0)
-        setTotalAll(json.totalAll ?? 0)
-        setTicketTypes(json.ticketTypes ?? [])
-        setStats(json.stats ?? {})
+        setParticipants(json.data ?? []);
+        setTotalItems(json.total ?? 0);
+        setTotalAll(json.totalAll ?? 0);
+        setTicketTypes(json.ticketTypes ?? []);
+        setStats(json.stats ?? {});
       }
     } catch {
-      toast.error("Gagal memuat data peserta")
+      toast.error("Gagal memuat data peserta");
     } finally {
-      setLoadingDb(false)
+      setLoadingDb(false);
+    }
+  }
+
+  async function handleSendWhatsAppBookingReminders() {
+    if (!eventId || !waReminderStats?.whatsapp_configured) return;
+    if (waReminderStats.unique_count <= 0) {
+      toast.error("Tidak ada nomor Telepon Pemesan");
+      return;
+    }
+    if (
+      !confirm(
+        `Kirim pesan WhatsApp ke ${waReminderStats.unique_count} nomor unik (Telepon Pemesan) untuk mengingatkan booking kursi?`,
+      )
+    )
+      return;
+
+    setWaSending(true);
+    try {
+      const res = await fetch("/api/participants/whatsapp-reminders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: eventId }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error ?? "Gagal mengirim WhatsApp");
+        return;
+      }
+      const queued = json.data?.queued ?? 0;
+      const failed = (json.data?.failed ?? []) as {
+        number: string;
+        error: string;
+      }[];
+      if (failed.length === 0) {
+        toast.success(
+          `${queued} pesan dimasukkan antrian WhatsApp (${waReminderStats.unique_count} nomor unik)`,
+        );
+      } else {
+        toast.warning(
+          `${queued} berhasil, ${failed.length} gagal. Nomor gagal pertama: ${failed[0]?.number ?? "—"}`,
+        );
+      }
+      void fetchWaReminderStats();
+    } catch {
+      toast.error("Gagal mengirim WhatsApp");
+    } finally {
+      setWaSending(false);
     }
   }
 
   /* ---------- file handling ---------- */
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]
-    if (!f) return
-    setFile(f)
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const data = new Uint8Array(ev.target?.result as ArrayBuffer)
-        const workbook = XLSX.read(data, { type: "array" })
-        const sheetName = workbook.SheetNames[0]
-        const sheet = workbook.Sheets[sheetName]
+        const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
           defval: "",
-        })
+        });
 
         if (json.length === 0) {
-          toast.error("File kosong atau format tidak sesuai")
-          return
+          toast.error("File kosong atau format tidak sesuai");
+          return;
         }
 
-        const hdrs = Object.keys(json[0])
-        setHeaders(hdrs)
+        const hdrs = Object.keys(json[0]);
+        setHeaders(hdrs);
         setRawRows(
           json.map((row) => {
-            const out: Record<string, string> = {}
+            const out: Record<string, string> = {};
             for (const k of hdrs) {
-              out[k] = String(row[k] ?? "")
+              out[k] = String(row[k] ?? "");
             }
-            return out
-          })
-        )
-        setMapping(autoMap(hdrs))
-        toast.success(`${json.length} baris data ditemukan`)
+            return out;
+          }),
+        );
+        setMapping(autoMap(hdrs));
+        toast.success(`${json.length} baris data ditemukan`);
       } catch {
-        toast.error("Gagal membaca file Excel")
+        toast.error("Gagal membaca file Excel");
       }
-    }
-    reader.readAsArrayBuffer(f)
+    };
+    reader.readAsArrayBuffer(f);
   }
 
   function clearFile() {
-    setFile(null)
-    setHeaders([])
-    setRawRows([])
+    setFile(null);
+    setHeaders([]);
+    setRawRows([]);
     setMapping({
       nama: "",
       email: "",
       jenis_kelamin: "",
       telepon: "",
+      telepon_pemesan: "",
       tiket: "",
       kode_tiket: "",
-    })
+    });
   }
 
   /* ---------- mapped preview data ---------- */
@@ -303,24 +409,25 @@ export default function ImportParticipantsPage() {
       email: row[mapping.email] ?? "",
       jenis_kelamin: row[mapping.jenis_kelamin] ?? "",
       telepon: row[mapping.telepon] ?? "",
+      telepon_pemesan: row[mapping.telepon_pemesan] ?? "",
       tiket: row[mapping.tiket] ?? "",
       kode_tiket: row[mapping.kode_tiket] ?? "",
-    }))
-  }, [rawRows, mapping])
+    }));
+  }, [rawRows, mapping]);
 
   const validCount = React.useMemo(
     () => mappedData.filter((p) => p.nama.trim()).length,
-    [mappedData]
-  )
+    [mappedData],
+  );
 
   /* ---------- save to database ---------- */
   async function handleSave(replace: boolean) {
-    if (mappedData.length === 0) return
-    setSaving(true)
-    setSaveProgress(10)
+    if (mappedData.length === 0) return;
+    setSaving(true);
+    setSaveProgress(10);
 
     try {
-      setSaveProgress(30)
+      setSaveProgress(30);
       const res = await fetch("/api/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -330,61 +437,68 @@ export default function ImportParticipantsPage() {
           event_id: eventId,
           import_all_events: importToAllEvents,
         }),
-      })
-      setSaveProgress(80)
-      const json = await res.json()
+      });
+      setSaveProgress(80);
+      const json = await res.json();
 
       if (json.success) {
-        const n = json.data?.inserted ?? 0
-        const t = json.data?.event_targets ?? 1
+        const n = json.data?.inserted ?? 0;
+        const t = json.data?.event_targets ?? 1;
         if (t > 1) {
           toast.success(
-            `${n} peserta per acara disimpan (${t} acara, total ${json.data?.total_db_rows ?? n * t} baris)`
-          )
+            `${n} peserta per acara disimpan (${t} acara, total ${json.data?.total_db_rows ?? n * t} baris)`,
+          );
         } else {
-          toast.success(`${n} peserta berhasil disimpan`)
+          toast.success(`${n} peserta berhasil disimpan`);
         }
-        clearFile()
-        await fetchParticipants()
-        setSaveProgress(100)
+        clearFile();
+        await fetchParticipants();
+        void fetchWaReminderStats();
+        setSaveProgress(100);
       } else {
-        toast.error(json.error ?? "Gagal menyimpan")
+        toast.error(json.error ?? "Gagal menyimpan");
       }
     } catch {
-      toast.error("Gagal menyimpan data")
+      toast.error("Gagal menyimpan data");
     } finally {
       setTimeout(() => {
-        setSaving(false)
-        setSaveProgress(0)
-      }, 500)
+        setSaving(false);
+        setSaveProgress(0);
+      }, 500);
     }
   }
 
   /* ---------- delete all ---------- */
   async function handleDeleteAll() {
-    if (!confirm("Hapus semua data peserta? Tindakan ini tidak bisa dibatalkan."))
-      return
+    if (
+      !confirm("Hapus semua data peserta? Tindakan ini tidak bisa dibatalkan.")
+    )
+      return;
     try {
-      const res = await fetch(`/api/participants?event_id=${eventId}`, { method: "DELETE" })
-      const json = await res.json()
+      const res = await fetch(`/api/participants?event_id=${eventId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
       if (json.success) {
-        toast.success("Semua data peserta dihapus")
-        setParticipants([])
+        toast.success("Semua data peserta dihapus");
+        setParticipants([]);
+        await fetchParticipants();
+        void fetchWaReminderStats();
       } else {
-        toast.error(json.error ?? "Gagal menghapus")
+        toast.error(json.error ?? "Gagal menghapus");
       }
     } catch {
-      toast.error("Gagal menghapus data")
+      toast.error("Gagal menghapus data");
     }
   }
 
   // reset page when filters change
   React.useEffect(() => {
-    setPage(1)
-  }, [debouncedSearch, ticketFilter])
+    setPage(1);
+  }, [debouncedSearch, ticketFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(totalItems / perPage))
-  const startIndex = (page - 1) * perPage
+  const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+  const startIndex = (page - 1) * perPage;
 
   /* ---------- render ---------- */
   return (
@@ -394,17 +508,20 @@ export default function ImportParticipantsPage() {
           Import Peserta
         </h1>
         <p className="text-sm text-muted-foreground">
-          Upload file Excel (.xlsx, .xls), mapping kolom, lalu simpan ke database.
+          Upload file Excel (.xlsx, .xls), mapping kolom, lalu simpan ke
+          database.
         </p>
       </header>
 
       {/* Upload Area */}
-      <div className={cn(
-        "rounded-md border border-dashed transition-colors duration-150",
-        file
-          ? "border-emerald-500/40 bg-emerald-500/5"
-          : "border-border hover:border-primary/40"
-      )}>
+      <div
+        className={cn(
+          "rounded-md border border-dashed transition-colors duration-150",
+          file
+            ? "border-emerald-500/40 bg-emerald-500/5"
+            : "border-border hover:border-primary/40",
+        )}
+      >
         <div className="p-5">
           {!file ? (
             <label
@@ -435,8 +552,8 @@ export default function ImportParticipantsPage() {
                 <div>
                   <p className="text-sm font-medium">{file.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {rawRows.length} baris &middot; {headers.length} kolom &middot;{" "}
-                    {validCount} valid
+                    {rawRows.length} baris &middot; {headers.length} kolom
+                    &middot; {validCount} valid
                   </p>
                 </div>
               </div>
@@ -454,151 +571,157 @@ export default function ImportParticipantsPage() {
       </div>
 
       {headers.length > 0 && (
-          <div className="space-y-6">
-            <Card className="overflow-hidden border-border">
-              <CardHeader>
-                <CardTitle className="text-sm font-semibold">
-                  Mapping Kolom
-                </CardTitle>
-                <CardDescription>
-                  Sesuaikan kolom Excel dengan field yang akan disimpan.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {(Object.keys(FIELD_LABELS) as (keyof ColumnMapping)[]).map(
-                    (field) => (
-                      <div key={field} className="space-y-1.5">
-                        <Label className="inline-flex items-center gap-1.5 text-xs font-medium">
-                          {FIELD_ICONS[field]}
-                          {FIELD_LABELS[field]}
-                        </Label>
-                        <Select
-                          value={mapping[field] || "__none__"}
-                          onValueChange={(v: string | null) =>
-                            setMapping((prev) => ({
-                              ...prev,
-                              [field]: !v || v === "__none__" ? "" : v,
-                            }))
-                          }
-                        >
-                          <SelectTrigger className="h-9 rounded-lg text-xs">
-                            <SelectValue placeholder="Pilih kolom..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">
-                              — Tidak dipilih —
+        <div className="space-y-6">
+          <Card className="overflow-hidden border-border">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">
+                Mapping Kolom
+              </CardTitle>
+              <CardDescription>
+                Sesuaikan kolom Excel dengan field yang akan disimpan.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {(Object.keys(FIELD_LABELS) as (keyof ColumnMapping)[]).map(
+                  (field) => (
+                    <div key={field} className="space-y-1.5">
+                      <Label className="inline-flex items-center gap-1.5 text-xs font-medium">
+                        {FIELD_ICONS[field]}
+                        {FIELD_LABELS[field]}
+                      </Label>
+                      <Select
+                        value={mapping[field] || "__none__"}
+                        onValueChange={(v: string | null) =>
+                          setMapping((prev) => ({
+                            ...prev,
+                            [field]: !v || v === "__none__" ? "" : v,
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-9 rounded-lg text-xs">
+                          <SelectValue placeholder="Pilih kolom..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">
+                            — Tidak dipilih —
+                          </SelectItem>
+                          {headers.map((h) => (
+                            <SelectItem key={h} value={h}>
+                              {h}
                             </SelectItem>
-                            {headers.map((h) => (
-                              <SelectItem key={h} value={h}>
-                                {h}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Preview Table */}
-            <Card className="overflow-hidden border-border">
-              <CardHeader>
-                <CardTitle className="text-sm font-semibold">
-                  Preview Data ({validCount} valid dari {rawRows.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="max-h-[400px]">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-border bg-secondary">
-                          <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
-                            #
-                          </th>
-                          {(
-                            Object.keys(FIELD_LABELS) as (keyof ColumnMapping)[]
-                          ).map((f) => (
-                            <th
-                              key={f}
-                              className="px-3 py-2.5 text-left font-medium text-muted-foreground"
-                            >
-                              {FIELD_LABELS[f]}
-                            </th>
                           ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {mappedData.slice(0, 50).map((row, i) => (
-                          <tr
-                            key={i}
-                            className={cn(
-                              "border-b border-border/30 transition-colors hover:bg-muted/20",
-                              !row.nama.trim() && "opacity-40"
-                            )}
-                          >
-                            <td className="px-3 py-2 tabular-nums text-muted-foreground">
-                              {i + 1}
-                            </td>
-                            <td className="px-3 py-2 font-medium">
-                              {row.nama || "—"}
-                            </td>
-                            <td className="px-3 py-2">{row.email || "—"}</td>
-                            <td className="px-3 py-2">
-                              {row.jenis_kelamin || "—"}
-                            </td>
-                            <td className="px-3 py-2 tabular-nums">
-                              {row.telepon || "—"}
-                            </td>
-                            <td className="px-3 py-2">
-                              {row.tiket ? (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px]"
-                                >
-                                  {row.tiket}
-                                </Badge>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td className="px-3 py-2 font-mono text-[10px]">
-                              {row.kode_tiket || "—"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {rawRows.length > 50 && (
-                    <div className="border-t border-border px-3 py-2 text-center text-xs text-muted-foreground">
-                      Menampilkan 50 dari {rawRows.length} baris
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                  ),
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Save Actions */}
-            <div className="space-y-3">
+          {/* Preview Table */}
+          <Card className="overflow-hidden border-border">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">
+                Preview Data ({validCount} valid dari {rawRows.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="max-h-[400px]">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border bg-secondary">
+                        <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
+                          #
+                        </th>
+                        {(
+                          Object.keys(FIELD_LABELS) as (keyof ColumnMapping)[]
+                        ).map((f) => (
+                          <th
+                            key={f}
+                            className="px-3 py-2.5 text-left font-medium text-muted-foreground"
+                          >
+                            {FIELD_LABELS[f]}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mappedData.slice(0, 50).map((row, i) => (
+                        <tr
+                          key={i}
+                          className={cn(
+                            "border-b border-border/30 transition-colors hover:bg-muted/20",
+                            !row.nama.trim() && "opacity-40",
+                          )}
+                        >
+                          <td className="px-3 py-2 tabular-nums text-muted-foreground">
+                            {i + 1}
+                          </td>
+                          <td className="px-3 py-2 font-medium">
+                            {row.nama || "—"}
+                          </td>
+                          <td className="px-3 py-2">{row.email || "—"}</td>
+                          <td className="px-3 py-2">
+                            {row.jenis_kelamin || "—"}
+                          </td>
+                          <td className="px-3 py-2 tabular-nums">
+                            {row.telepon || "—"}
+                          </td>
+                          <td className="px-3 py-2 tabular-nums">
+                            {row.telepon_pemesan || "—"}
+                          </td>
+                          <td className="px-3 py-2">
+                            {row.tiket ? (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px]"
+                              >
+                                {row.tiket}
+                              </Badge>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-[10px]">
+                            {row.kode_tiket || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {rawRows.length > 50 && (
+                  <div className="border-t border-border px-3 py-2 text-center text-xs text-muted-foreground">
+                    Menampilkan 50 dari {rawRows.length} baris
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Save Actions */}
+          <div className="space-y-3">
             {partnerSlug && (
-              <label
-                className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/80 bg-muted/20 p-3 text-sm"
-              >
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/80 bg-muted/20 p-3 text-sm">
                 <Checkbox
                   checked={importToAllEvents}
                   onCheckedChange={(v) => setImportToAllEvents(v === true)}
                   className="mt-0.5"
                 />
                 <div className="space-y-0.5">
-                  <span className="font-medium leading-tight">Import ke semua acara</span>
+                  <span className="font-medium leading-tight">
+                    Import ke semua acara
+                  </span>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Jika diaktifkan, daftar yang sama juga disimpan ke
                     {mirrorEventName ? (
-                      <span className="text-foreground"> {mirrorEventName}</span>
+                      <span className="text-foreground">
+                        {" "}
+                        {mirrorEventName}
+                      </span>
                     ) : (
                       " acara terhubung"
                     )}
@@ -633,8 +756,8 @@ export default function ImportParticipantsPage() {
                 </div>
               )}
             </div>
-            </div>
           </div>
+        </div>
       )}
 
       {/* Saved Data Section */}
@@ -643,7 +766,40 @@ export default function ImportParticipantsPage() {
           <h2 className="font-display text-lg font-bold tracking-tight">
             Data Tersimpan
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="gap-1.5"
+              disabled={
+                waSending ||
+                loadingDb ||
+                !eventId ||
+                !waReminderStats?.whatsapp_configured ||
+                (waReminderStats?.unique_count ?? 0) <= 0
+              }
+              title={
+                !waReminderStats?.whatsapp_configured
+                  ? "Set WHATSAPP_SEND_URL (atau WHATSAPP_API_ORIGIN) dan WHATSAPP_EXTERNAL_API_KEY di server — lihat WHASTAPP_SERVICE.md"
+                  : (waReminderStats?.unique_count ?? 0) <= 0
+                    ? "Tidak ada nomor Telepon Pemesan di data peserta"
+                    : "Kirim pengingat booking kursi ke nomor Telepon Pemesan unik"
+              }
+              onClick={() => void handleSendWhatsAppBookingReminders()}
+            >
+              {waSending ? (
+                <Loader2Icon className="size-3.5 animate-spin" />
+              ) : (
+                <MessageCircleIcon className="size-3.5" />
+              )}
+              Reminder WA ke Peserta
+              {waReminderStats != null && waReminderStats.unique_count > 0 && (
+                <span className="tabular-nums text-muted-foreground">
+                  ({waReminderStats.unique_count})
+                </span>
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -695,14 +851,19 @@ export default function ImportParticipantsPage() {
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <SearchIcon className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Cari nama, email, telepon, kode..."
+                placeholder="Cari nama, email, telepon, telepon pemesan, kode..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9 rounded-lg pl-9 text-xs"
               />
             </div>
             {ticketTypes.length > 1 && (
-              <Select value={ticketFilter} onValueChange={(v: string | null) => setTicketFilter(v ?? "all")}>
+              <Select
+                value={ticketFilter}
+                onValueChange={(v: string | null) =>
+                  setTicketFilter(v ?? "all")
+                }
+              >
                 <SelectTrigger className="h-9 w-[180px] rounded-lg text-xs">
                   <SelectValue placeholder="Filter tiket" />
                 </SelectTrigger>
@@ -756,6 +917,9 @@ export default function ImportParticipantsPage() {
                         Telepon
                       </th>
                       <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
+                        Telepon Pemesan
+                      </th>
+                      <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
                         Tiket
                       </th>
                       <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">
@@ -786,10 +950,12 @@ export default function ImportParticipantsPage() {
                                 p.jenis_kelamin.toUpperCase() === "MALE" ||
                                   p.jenis_kelamin.toUpperCase() === "LAKI-LAKI"
                                   ? "border-primary/30 bg-primary/10 text-primary"
-                                  : p.jenis_kelamin.toUpperCase() === "FEMALE" ||
-                                    p.jenis_kelamin.toUpperCase() === "PEREMPUAN"
-                                  ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                                  : ""
+                                  : p.jenis_kelamin.toUpperCase() ===
+                                        "FEMALE" ||
+                                      p.jenis_kelamin.toUpperCase() ===
+                                        "PEREMPUAN"
+                                    ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                                    : "",
                               )}
                             >
                               {p.jenis_kelamin}
@@ -801,12 +967,12 @@ export default function ImportParticipantsPage() {
                         <td className="px-3 py-2 tabular-nums">
                           {p.telepon || "—"}
                         </td>
+                        <td className="px-3 py-2 tabular-nums">
+                          {p.telepon_pemesan || "—"}
+                        </td>
                         <td className="px-3 py-2">
                           {p.tiket ? (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px]"
-                            >
+                            <Badge variant="secondary" className="text-[10px]">
                               {p.tiket}
                             </Badge>
                           ) : (
@@ -855,15 +1021,16 @@ export default function ImportParticipantsPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
-                      {startIndex + 1}–{Math.min(startIndex + perPage, totalItems)}{" "}
-                      dari {totalItems}
+                      {startIndex + 1}–
+                      {Math.min(startIndex + perPage, totalItems)} dari{" "}
+                      {totalItems}
                     </span>
                     <span className="text-border">|</span>
                     <Select
                       value={String(perPage)}
                       onValueChange={(v: string | null) => {
-                        setPerPage(Number(v) || 25)
-                        setPage(1)
+                        setPerPage(Number(v) || 25);
+                        setPage(1);
                       }}
                     >
                       <SelectTrigger className="h-7 w-[70px] rounded-md text-xs">
@@ -905,7 +1072,9 @@ export default function ImportParticipantsPage() {
                       size="sm"
                       className="size-8 p-0"
                       disabled={page >= totalPages}
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
                     >
                       <ChevronRightIcon className="size-3.5" />
                     </Button>
@@ -926,5 +1095,5 @@ export default function ImportParticipantsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

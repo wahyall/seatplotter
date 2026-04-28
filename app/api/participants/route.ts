@@ -6,6 +6,7 @@ interface ParticipantInput {
   email: string
   jenis_kelamin: string
   telepon: string
+  telepon_pemesan: string
   tiket: string
   kode_tiket: string
 }
@@ -103,6 +104,7 @@ export async function POST(req: Request) {
         email: (p.email ?? "").trim(),
         jenis_kelamin: (p.jenis_kelamin ?? "").trim(),
         telepon: String(p.telepon ?? "").trim(),
+        telepon_pemesan: String(p.telepon_pemesan ?? "").trim(),
         tiket: (p.tiket ?? "").trim().replace(/\s*-\s*\(.*?\)\s*$/, ""),
         kode_tiket: (p.kode_tiket ?? "").trim(),
         event_id: targetId,
@@ -159,7 +161,7 @@ export async function GET(req: Request) {
 
   if (search) {
     query = query.or(
-      `nama.ilike.%${search}%,email.ilike.%${search}%,telepon.ilike.%${search}%,kode_tiket.ilike.%${search}%`
+      `nama.ilike.%${search}%,email.ilike.%${search}%,telepon.ilike.%${search}%,telepon_pemesan.ilike.%${search}%,kode_tiket.ilike.%${search}%`
     )
   }
 
