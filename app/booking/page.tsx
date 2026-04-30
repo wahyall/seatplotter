@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRightIcon, Link2OffIcon, Link2Icon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import {
   bookingThemePrimaryFallback,
   getBookingThemeId,
@@ -14,7 +14,6 @@ const PORTAL_LINKS = [
     description: "Pilih kursi untuk event Ittiba Reconnect Surabaya.",
     imageSrc: "/banners/ittiba-reconnect-sby.jpg",
     imageAlt: "Banner event Ittiba Reconnect Surabaya",
-    Icon: Link2Icon,
   },
   {
     name: "Ittiba Disconnect",
@@ -22,7 +21,6 @@ const PORTAL_LINKS = [
     description: "Pilih kursi untuk event Ittiba Disconnect Surabaya.",
     imageSrc: "/banners/ittiba-disconnect-sby.jpg",
     imageAlt: "Banner event Ittiba Disconnect Surabaya",
-    Icon: Link2OffIcon,
   },
 ] as const;
 
@@ -54,7 +52,6 @@ export default function BookingPortalPage() {
 
         <section className="grid gap-4 md:grid-cols-2">
           {PORTAL_LINKS.map((item) => {
-            const Icon = item.Icon;
             const themeId = getBookingThemeId(
               item.href.replace("/booking/", ""),
             );
@@ -82,12 +79,6 @@ export default function BookingPortalPage() {
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                   />
-                </div>
-                <div
-                  className="mb-4 inline-flex rounded-xl border bg-black/20 p-2.5"
-                  style={{ borderColor: `${primary}55` }}
-                >
-                  <Icon className="size-5" style={{ color: primary }} />
                 </div>
                 <p className="text-lg font-semibold text-white">{item.name}</p>
                 <p className="mt-2 min-h-12 text-sm leading-relaxed text-zinc-300">
