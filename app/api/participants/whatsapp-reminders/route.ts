@@ -215,17 +215,18 @@ export async function POST(request: Request) {
   const eventTitle = eventRow.event_name?.trim() || "Acara";
 
   const message = [
-    `Assalamualaikum Warohmatullahi Wabarokatuh,`,
+    `Assalamu'alaikum warahmatullahi wabarakatuh,`,
     ``,
-    `Kami ingin mengingatkan Anda untuk melakukan *booking kursi* untuk acara berikut.`,
+    `Semoga Allah selalu jaga kita semua dalam kesehatan dan keberkahan.`,
     ``,
+    `Minji mau ngingetin nih, jangan lupa *booking kursi* untuk acara ini ya:`,
     `Acara: *${eventTitle}*`,
     ``,
-    `Silakan buka tautan ini untuk melakukan booking kursi:`,
+    `Klik link ini untuk memilih kursi:`,
     bookingUrl,
     ``,
-    `Terima kasih.`,
-    `Wassalamualaikum Warohmatullahi Wabarokatuh.`,
+    `Jazakumullahu khairan.`,
+    `Wassalamu'alaikum warahmatullahi wabarakatuh.`,
   ].join("\n");
 
   const concurrency = getReminderConcurrency();
@@ -262,10 +263,8 @@ export async function POST(request: Request) {
   }
 
   type Fail = { number: string; error: string };
-  const outcomes = await mapPoolConcurrency(
-    numbers,
-    concurrency,
-    (number) => sendOne(number),
+  const outcomes = await mapPoolConcurrency(numbers, concurrency, (number) =>
+    sendOne(number),
   );
 
   let queued = 0;
