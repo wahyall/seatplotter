@@ -108,6 +108,7 @@ export default function BookingPage() {
   const [scanProgress, setScanProgress] = React.useState<ScanProgress | null>(null)
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
   const fileRef = React.useRef<HTMLInputElement>(null)
+  const [showIframeModal, setShowIframeModal] = React.useState(false)
 
   // We no longer use object URLs, so we don't need the URL.revokeObjectURL cleanup, 
   // but it's safe to keep the state reset.
@@ -948,6 +949,18 @@ export default function BookingPage() {
                 />
               </label>
 
+              <div className="mt-4 w-full text-center">
+                <p className="mb-2 text-sm text-muted-foreground">Belum punya file Kode QR?</p>
+                <button
+                  type="button"
+                  onClick={() => setShowIframeModal(true)}
+                  className="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-md border border-border px-5 py-3 text-sm font-medium transition-colors duration-150 hover:bg-muted"
+                >
+                  <DownloadIcon className="size-4" />
+                  Unduh Kode QR
+                </button>
+              </div>
+
               {previewUrl && (
                 <div className={bookingInsetPreviewClass(themeId)}>
                   <img 
@@ -957,6 +970,44 @@ export default function BookingPage() {
                   />
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Iframe modal */}
+      <AnimatePresence>
+        {showIframeModal && (
+          <motion.div
+            key="iframe-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={cn(bookingModalBackdropClass(themeId), "z-50 p-4 md:p-8")}
+          >
+            <motion.div
+              initial={{ scale: 0.97, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.97, opacity: 0 }}
+              className={cn(bookingModalCardClass(themeId), "flex h-full w-full max-w-5xl flex-col overflow-hidden p-0")}
+            >
+              <div className="flex items-center justify-between border-b border-border p-4">
+                <h2 className="font-display text-lg font-bold">Unduh Kode QR</h2>
+                <button
+                  onClick={() => setShowIframeModal(false)}
+                  className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <XIcon className="size-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden bg-white rounded-b-xl">
+                <iframe
+                  src="https://darisini.com"
+                  className="h-full w-full border-0"
+                  title="Unduh Kode QR"
+                  allow="fullscreen"
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}
