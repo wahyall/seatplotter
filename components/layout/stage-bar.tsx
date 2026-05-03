@@ -18,9 +18,6 @@ export function StageBar({
     >
       <span
         className="text-xs font-semibold tracking-[0.3em] uppercase inline-block"
-        style={{
-          transform: "translateX(var(--translate-x, 0))",
-        }}
       >
         {label}
       </span>
